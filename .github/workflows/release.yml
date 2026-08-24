@@ -55,7 +55,11 @@ jobs:
             -PVERSION_CODE="${{ steps.version.outputs.VERSION_CODE }}" \
             --no-daemon
 
-      # 6. Podpisanie wygenerowanego pliku APK przy użyciu klucza JKS z GitHub Secrets
+      # 6. Instalacja build-tools wymaganych przez akcję podpisującą (zipalign/apksigner 29.0.3)
+      - name: Install Android Build Tools 29.0.3
+        run: yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" "build-tools;29.0.3"
+
+      # 7. Podpisanie wygenerowanego pliku APK przy użyciu klucza JKS z GitHub Secrets
       - name: Sign Release APK
         uses: r0adkll/sign-android-release@v1
         id: sign_app
@@ -66,12 +70,12 @@ jobs:
           keyStorePassword: ${{ secrets.RELEASE_STORE_PASSWORD }}
           keyPassword: ${{ secrets.RELEASE_KEY_PASSWORD }}
 
-      # 7. Zmiana nazwy podpisanego pliku APK na where-is-my-money-<TAG>.apk
+      # 8. Zmiana nazwy podpisanego pliku APK na where-is-my-money-<TAG>.apk
       - name: Rename Signed APK
         run: |
-          mv ${{ steps.sign_app.outputs.signedFile }} app/build/outputs/apk/release/where-is-my-money-${{ steps.version.outputs.TAG_NAME }}.apk
+          mv ${{ steps.sign_app.outputs.signedReleaseFile }} app/build/outputs/apk/release/where-is-my-money-${{ steps.version.outputs.TAG_NAME }}.apk
 
-      # 8. Utworzenie GitHub Release z wygenerowaną historią commitów i załączenie APK
+      # 9. Utworzenie GitHub Release z wygenerowaną historią commitów i załączenie APK
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
