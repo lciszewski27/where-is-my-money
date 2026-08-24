@@ -7,25 +7,46 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Expressive Material 3 shapes with distinct morphing geometry.
- * - extraLarge: pill / fully rounded
- * - large: generous rounding
- * - medium: balanced
- * - small: subtle
- * - extraSmall: minimal
+ * Includes the May 2025 Expressive update corner tokens.
+ *
+ * - extraSmall: minimal (4dp)
+ * - small: subtle (8dp)
+ * - medium: balanced (12dp)
+ * - large: generous (16dp)
+ * - largeIncreases: extra generous (20dp) — Expressive
+ * - extraLarge: fully rounded (28dp)
+ * - extraLargeIncreased: more rounded (32dp) — Expressive
+ * - extraExtraLarge: pill-like (48dp) — Expressive
  */
 val MoneyShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
     small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(14.dp),
-    large = RoundedCornerShape(20.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
     extraLarge = RoundedCornerShape(28.dp)
 )
 
-/** Predefined corner radii for one-off usage. */
+/**
+ * Predefined corner radii for one-off usage.
+ * Mirrors the shape token scale but can be used directly.
+ */
 object MoneyCornerRadius {
+    /** Pill / fully rounded — for buttons, chips, badges. */
     val pill = 48.dp
-    val xl = 28.dp
-    val lg = 20.dp
-    val md = 14.dp
-    val sm = 8.dp
+    /** Extra expressive rounding for large dialogs, sheets. */
+    val extraExtraLarge = 48.dp
+    /** Larger sheet / dialog corners — Expressive token. */
+    val extraLargeIncreased = 32.dp
+    /** Dialog / bottom sheet / FAB corners. */
+    val extraLarge = 28.dp
+    /** Large increased — expressive cards, containers. */
+    val largeIncreased = 20.dp
+    /** Large — cards, elevated surfaces. */
+    val large = 16.dp
+    /** Medium — text fields, menus, small cards. */
+    val medium = 12.dp
+    /** Small — chips, snackbars. */
+    val small = 8.dp
+    /** Extra Small — minimal rounding. */
+    val extraSmall = 4.dp
 }

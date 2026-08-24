@@ -13,10 +13,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,13 +24,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
+import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 
 /**
  * Expressive Bottom Summary Bar showing 3 distinct metrics:
- * 1. They Owe Me (receivables - green/positive tone)
- * 2. I Owe Them (payables - red/negative tone)
+ * 1. They Owe Me (receivables — positive/tertiary tone)
+ * 2. I Owe Them (payables — error/negative tone)
  * 3. Net Balance (final result)
  *
+ * Uses tonal elevation instead of shadow for MD3 depth communication.
  * Fixed at the bottom with elevated M3 Surface and ExtraLarge top corners.
  */
 @Composable
@@ -46,15 +44,14 @@ fun BottomSummaryBar(
 
     Surface(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        shadowElevation = 8.dp,
         tonalElevation = 3.dp
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 16.dp)
+                .padding(horizontal = MoneySpacing.lg, vertical = MoneySpacing.md)
         ) {
             // 3 metrics row
             Row(
@@ -62,60 +59,58 @@ fun BottomSummaryBar(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.Top
             ) {
-                // They Owe Me
                 MetricItem(
                     label = "They Owe Me",
                     amountCents = summary.totalReceivablesCents,
                     currencySymbol = currencySymbol,
-                    positive = true,
+                    isPositive = true,
                     modifier = Modifier.weight(1f)
                 )
 
-                // Divider
+                // Vertical divider
                 Text(
                     text = "|",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    modifier = Modifier.padding(horizontal = MoneySpacing.xs)
                 )
 
-                // I Owe Them
                 MetricItem(
                     label = "I Owe Them",
                     amountCents = summary.totalPayablesCents,
                     currencySymbol = currencySymbol,
-                    positive = false,
+                    isPositive = false,
                     modifier = Modifier.weight(1f)
                 )
 
-                // Divider
                 Text(
                     text = "|",
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.outlineVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp)
+                    modifier = Modifier.padding(horizontal = MoneySpacing.xs)
                 )
 
-                // Net Balance
                 MetricItem(
                     label = "Net",
                     amountCents = summary.netBalanceCents,
                     currencySymbol = currencySymbol,
-                    positive = summary.netBalanceCents >= 0,
+                    isPositive = summary.netBalanceCents >= 0,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(MoneySpacing.xxs))
 
-            // Active debts count
+            // Active debts count — spring animated
             AnimatedVisibility(
                 visible = summary.totalActiveDebts > 0,
                 enter = fadeIn(spring()) + expandVertically(spring()),
                 exit = fadeOut(spring()) + shrinkVertically(spring())
             ) {
                 Text(
-                    text = "${summary.totalActiveDebts} active debt${if (summary.totalActiveDebts != 1) "s" else ""} • ${summary.activeCurrencies.size} currency${if (summary.activeCurrencies.size != 1) "ies" else "y"}",
+                    text = "${summary.totalActiveDebts} active debt${if (summary.totalActiveDebts != 1) "s" else ""}" +
+                            " • ${summary.activeCurrencies.size} " +
+                            "${if (summary.activeCurrencies.size != 1) "currencies" else "currency"}",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -131,7 +126,7 @@ private fun MetricItem(
     label: String,
     amountCents: Long,
     currencySymbol: String,
-    positive: Boolean,
+    isPositive: Boolean,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -144,19 +139,16 @@ private fun MetricItem(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = FontWeight.Medium
         )
-        Spacer(modifier = Modifier.height(2.dp))
-        val sign = if (amountCents >= 0) "" else "-"
-        val abs = kotlin.math.abs(amountCents)
-        val major = abs / 100
-        val minor = abs % 100
-        val displayText = "$sign$major.${minor.toString().padStart(2, '0')}$currencySymbol"
+        Spacer(modifier = Modifier.height(MoneySpacing.micro))
 
-        val textColor = if (amountCents == 0L) {
-            MaterialTheme.colorScheme.onSurface
-        } else if (positive) {
-            androidx.compose.ui.graphics.Color(0xFF2E7D32)
-        } else {
-            androidx.compose.ui.graphics.Color(0xFFC62828)
+        // Use MD3 semantic color roles instead of hardcoded hex colors:
+        // - Positive (receivables) → tertiary
+        // - Negative (payables, debits) → error
+        // - Zero → onSurface
+        val textColor = when {
+            amountCents == 0L -> MaterialTheme.colorScheme.onSurface
+            isPositive -> MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.error
         }
 
         AnimatedAmountText(

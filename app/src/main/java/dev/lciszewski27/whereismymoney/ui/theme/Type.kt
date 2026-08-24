@@ -6,6 +6,13 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
+/**
+ * MD3 Typography with emphasized (bold/black weight) variants for expressive moments.
+ *
+ * Standard typescale follows Material 3 spec values.
+ * Emphasized variants use heavier weights for the same font size:
+ * useful for financial figures, hero amounts, and key metrics.
+ */
 val Typography = Typography(
     displayLarge = TextStyle(
         fontFamily = FontFamily.Default,
@@ -108,3 +115,43 @@ val Typography = Typography(
         letterSpacing = 0.5.sp
     )
 )
+
+/**
+ * Emphasized typography helper for expressive financial figures.
+ *
+ * MD3 Expressive recommends heavier weight variants for key data.
+ * Use these as overrides for critical amounts, totals, and hero text.
+ */
+object MoneyEmphasizedTypography {
+    /** Display size for hero balance amounts. */
+    val displayMediumBlack = TextStyle(
+        fontWeight = FontWeight.Black,
+        fontSize = 45.sp,
+        lineHeight = 52.sp
+    )
+    /** Display size for large numbers. */
+    val displaySmallBlack = TextStyle(
+        fontWeight = FontWeight.Black,
+        fontSize = 36.sp,
+        lineHeight = 44.sp
+    )
+    /** Headline for section totals. */
+    val headlineMediumBold = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 28.sp,
+        lineHeight = 36.sp
+    )
+    /** Title for card-level amounts. */
+    val titleLargeBold = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 22.sp,
+        lineHeight = 28.sp
+    )
+    /** Title for inline amounts. */
+    val titleMediumBold = TextStyle(
+        fontWeight = FontWeight.Bold,
+        fontSize = 16.sp,
+        lineHeight = 24.sp,
+        letterSpacing = 0.15.sp
+    )
+}

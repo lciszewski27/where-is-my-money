@@ -5,12 +5,12 @@ import androidx.compose.ui.graphics.Color
 // ── Light fallback palette (vibrant, finance-oriented) ──────────────
 val LightPrimary = Color(0xFF1A6B52)          // Deep teal-green
 val LightOnPrimary = Color(0xFFFFFFFF)
-val LightPrimaryContainer = Color(0xFFA7F5D2)  // Soft mint
-val LightOnPrimaryContainer = Color(0xFF002115)
-val LightSecondary = Color(0xFF4C6355)
+val LightPrimaryContainer = Color(0xFFA7F5D2)
+val LightOnPrimaryContainer = Color(0xFF002117)
+val LightSecondary = Color(0xFF4D6358)
 val LightOnSecondary = Color(0xFFFFFFFF)
-val LightSecondaryContainer = Color(0xFFCEE8D4)
-val LightOnSecondaryContainer = Color(0xFF0A1F15)
+val LightSecondaryContainer = Color(0xFFCFE9DB)
+val LightOnSecondaryContainer = Color(0xFF0A1F17)
 val LightTertiary = Color(0xFF3C6471)
 val LightOnTertiary = Color(0xFFFFFFFF)
 val LightTertiaryContainer = Color(0xFFBEE9F8)
@@ -21,6 +21,13 @@ val LightSurface = Color(0xFFFBFDF8)
 val LightOnSurface = Color(0xFF191C1A)
 val LightSurfaceVariant = Color(0xFFDCE5DB)
 val LightOnSurfaceVariant = Color(0xFF414942)
+val LightSurfaceContainerLowest = Color(0xFFFFFFFF)
+val LightSurfaceContainerLow = Color(0xFFF5F8F2)
+val LightSurfaceContainer = Color(0xFFEFF2EC)
+val LightSurfaceContainerHigh = Color(0xFFE9ECE7)
+val LightSurfaceContainerHighest = Color(0xFFE3E6E1)
+val LightSurfaceDim = Color(0xFFDBDED9)
+val LightSurfaceBright = Color(0xFFFBFDF8)
 val LightError = Color(0xFFBA1A1A)
 val LightOnError = Color(0xFFFFFFFF)
 val LightErrorContainer = Color(0xFFFFDAD6)
@@ -47,6 +54,13 @@ val DarkSurface = Color(0xFF191C1A)
 val DarkOnSurface = Color(0xFFE1E3DD)
 val DarkSurfaceVariant = Color(0xFF414942)
 val DarkOnSurfaceVariant = Color(0xFFC0C9BE)
+val DarkSurfaceContainerLowest = Color(0xFF141715)
+val DarkSurfaceContainerLow = Color(0xFF1C1F1D)
+val DarkSurfaceContainer = Color(0xFF202321)
+val DarkSurfaceContainerHigh = Color(0xFF2A2E2B)
+val DarkSurfaceContainerHighest = Color(0xFF353936)
+val DarkSurfaceDim = Color(0xFF191C1A)
+val DarkSurfaceBright = Color(0xFF3F4340)
 val DarkError = Color(0xFFFFB4AB)
 val DarkOnError = Color(0xFF690005)
 val DarkErrorContainer = Color(0xFF93000A)
@@ -54,12 +68,16 @@ val DarkOnErrorContainer = Color(0xFFFFDAD6)
 val DarkOutline = Color(0xFF8A9389)
 val DarkOutlineVariant = Color(0xFF414942)
 
-// ── Semantic tone colors (used for receivables / payables) ─────────
-val PositiveGreen = Color(0xFF2E7D32)
-val PositiveGreenContainer = Color(0xFFC8E6C9)
-val NegativeRed = Color(0xFFC62828)
-val NegativeRedContainer = Color(0xFFFFCDD2)
-val DarkPositiveGreen = Color(0xFF81C784)
-val DarkPositiveGreenContainer = Color(0xFF1B5E20)
-val DarkNegativeRed = Color(0xFFEF9A9A)
-val DarkNegativeRedContainer = Color(0xFFB71C1C)
+/**
+ * Semantic tone roles used throughout the app.
+ * These map to MD3 color scheme roles so they adapt to dynamic color / dark theme.
+ *
+ * - positive (receivables / they owe me) → tertiary
+ * - negative (payables / I owe them) → error
+ * - settled / neutral → outline
+ */
+object MoneySemanticColors {
+    val positive: Color get() = Color.Unspecified // placeholder; use MaterialTheme.colorScheme.tertiary
+    val negative: Color get() = Color.Unspecified // placeholder; use MaterialTheme.colorScheme.error
+    val settled: Color get() = Color.Unspecified  // placeholder; use MaterialTheme.colorScheme.outline
+}

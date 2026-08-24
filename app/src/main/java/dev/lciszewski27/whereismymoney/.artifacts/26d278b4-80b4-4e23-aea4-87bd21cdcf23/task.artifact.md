@@ -1,0 +1,8 @@
+- [x] Update `PersonDetailUiState.kt` and `ViewModel` for editing people and debts.
+- [x] Refine `DashboardScreen.kt`:
+    - [x] Stabilize Top Bar and Search integration.
+    - [x] Fix Empty State centering.
+- [x] Refine `PersonDetailScreen.kt`:
+    - [x] Implement "Edit Person" dialog (name, color).
+    - [x] Add "Edit" action to history items.
+- [x] Update `AppNavHost.kt` to handle edit debt navigation.

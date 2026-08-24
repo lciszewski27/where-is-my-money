@@ -1,11 +1,5 @@
 package dev.lciszewski27.whereismymoney.ui.adddebt
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -26,15 +19,12 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -67,11 +57,10 @@ import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
+import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 import java.text.SimpleDateFormat
 import java.util.Date
-import androidx.compose.foundation.layout.Row
-import androidx.compose.material.icons.filled.PersonAdd
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,10 +72,10 @@ fun AddDebtSheetContent(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 32.dp)
+            .padding(horizontal = MoneySpacing.xl)
+            .padding(bottom = MoneySpacing.xxl)
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
+        verticalArrangement = Arrangement.spacedBy(MoneySpacing.md)
     ) {
         // Title row
         Row(
@@ -105,44 +94,32 @@ fun AddDebtSheetContent(
         }
 
         // ── Debt Type Segmented Button ──────────────────────────────
-        SingleChoiceSegmentedButtonRow(
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             SegmentedButton(
                 selected = uiState.debtType == DebtType.THEY_OWE_ME,
                 onClick = { onEvent(AddDebtUiEvent.DebtTypeChanged(DebtType.THEY_OWE_ME)) },
                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                 icon = {
-                    Icon(
-                        Icons.Outlined.ArrowDownward,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Icon(Icons.Outlined.ArrowDownward, contentDescription = null,
+                        modifier = Modifier.size(18.dp))
                 }
-            ) {
-                Text("They Owe Me", style = MaterialTheme.typography.labelLarge)
-            }
+            ) { Text("They Owe Me", style = MaterialTheme.typography.labelLarge) }
             SegmentedButton(
                 selected = uiState.debtType == DebtType.I_OWE_THEM,
                 onClick = { onEvent(AddDebtUiEvent.DebtTypeChanged(DebtType.I_OWE_THEM)) },
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                 icon = {
-                    Icon(
-                        Icons.Outlined.ArrowUpward,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Icon(Icons.Outlined.ArrowUpward, contentDescription = null,
+                        modifier = Modifier.size(18.dp))
                 }
-            ) {
-                Text("I Owe Them", style = MaterialTheme.typography.labelLarge)
-            }
+            ) { Text("I Owe Them", style = MaterialTheme.typography.labelLarge) }
         }
 
         // ── Amount Input + Currency Picker ─────────────────────────
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            horizontalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
         ) {
             OutlinedTextField(
                 value = uiState.amountText,
@@ -150,7 +127,8 @@ fun AddDebtSheetContent(
                 label = { Text("Amount") },
                 placeholder = { Text("0.00") },
                 leadingIcon = {
-                    Icon(Icons.Filled.AttachMoney, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                    Icon(Icons.Filled.AttachMoney, contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary)
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
@@ -158,7 +136,6 @@ fun AddDebtSheetContent(
                 shape = MaterialTheme.shapes.medium,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
             )
-
             CurrencyDropdown(
                 selectedCurrency = uiState.currency,
                 onCurrencySelected = { onEvent(AddDebtUiEvent.CurrencyChanged(it)) },
@@ -166,7 +143,7 @@ fun AddDebtSheetContent(
             )
         }
 
-        // ── Contact Selector (Simplified) ────────────────────────────
+        // ── Contact Selector ──────────────────────────────────────────
         if (uiState.selectedPersonId != null) {
             val person = uiState.persons.firstOrNull { it.id == uiState.selectedPersonId }
             if (person != null) {
@@ -184,16 +161,17 @@ fun AddDebtSheetContent(
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary
             )
-            
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+            Column(verticalArrangement = Arrangement.spacedBy(MoneySpacing.xs)) {
                 var expanded by remember { mutableStateOf(false) }
-                
+
                 ExposedDropdownMenuBox(
                     expanded = expanded,
                     onExpandedChange = { expanded = it }
                 ) {
                     OutlinedTextField(
-                        value = if (uiState.showNewPersonField) uiState.newPersonName else uiState.selectedPersonName,
+                        value = if (uiState.showNewPersonField) uiState.newPersonName
+                                else uiState.selectedPersonName,
                         onValueChange = {
                             if (uiState.showNewPersonField) {
                                 onEvent(AddDebtUiEvent.NewPersonNameChanged(it))
@@ -208,7 +186,7 @@ fun AddDebtSheetContent(
                             .fillMaxWidth(),
                         shape = MaterialTheme.shapes.large
                     )
-                    
+
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
@@ -221,16 +199,17 @@ fun AddDebtSheetContent(
                             leadingIcon = { Icon(Icons.Filled.PersonAdd, null) },
                             text = { Text("Create new person") }
                         )
-                        
                         if (uiState.persons.isNotEmpty()) {
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                            HorizontalDivider(modifier = Modifier.padding(vertical = MoneySpacing.xxs))
                             uiState.persons.forEach { person ->
                                 DropdownMenuItem(
                                     onClick = {
                                         expanded = false
                                         onEvent(AddDebtUiEvent.SelectPerson(person.id, person.name))
                                     },
-                                    leadingIcon = { PersonAvatar(person.name, person.colorSeed, size = 32.dp) },
+                                    leadingIcon = {
+                                        PersonAvatar(person.name, person.colorSeed, size = 32.dp)
+                                    },
                                     text = { Text(person.name) }
                                 )
                             }
@@ -266,9 +245,11 @@ fun AddDebtSheetContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            FilledTonalButton(onClick = { onEvent(AddDebtUiEvent.ToggleDatePicker) }) {
-                Icon(Icons.Filled.CalendarMonth, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(4.dp))
+            FilledTonalButton(onClick = { onEvent(AddDebtUiEvent.ToggleDatePicker) },
+                shape = MaterialTheme.shapes.medium) {
+                Icon(Icons.Filled.CalendarMonth, contentDescription = null,
+                    modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(MoneySpacing.xxs))
                 Text(if (uiState.dueDateMillis != null) "Change" else "Set Date")
             }
         }
@@ -283,36 +264,28 @@ fun AddDebtSheetContent(
                 confirmButton = {
                     TextButton(onClick = {
                         onEvent(AddDebtUiEvent.SetDueDate(datePickerState.selectedDateMillis))
-                    }) {
-                        Text("OK")
-                    }
+                    }) { Text("OK") }
                 },
                 dismissButton = {
                     TextButton(onClick = {
                         onEvent(AddDebtUiEvent.SetDueDate(null))
-                    }) {
-                        Text("Clear")
-                    }
+                    }) { Text("Clear") }
                 }
-            ) {
-                DatePicker(state = datePickerState)
-            }
+            ) { DatePicker(state = datePickerState) }
         }
 
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(MoneySpacing.xs))
 
         // ── Save Button ─────────────────────────────────────────────
         Button(
             onClick = { onEvent(AddDebtUiEvent.SaveDebt) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp),
-            shape = RoundedCornerShape(20.dp),
+            modifier = Modifier.fillMaxWidth().height(56.dp),
+            shape = MaterialTheme.shapes.large,
             enabled = (uiState.selectedPersonId != null || uiState.newPersonName.isNotBlank()) &&
                     uiState.amountCents > 0
         ) {
             Icon(Icons.Filled.Save, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
+            Spacer(Modifier.width(MoneySpacing.xs))
             Text(
                 text = if (uiState.isEditing) "Update Debt" else "Save Debt",
                 style = MaterialTheme.typography.titleMedium,
@@ -342,9 +315,7 @@ private fun CurrencyDropdown(
             onValueChange = {},
             readOnly = true,
             label = { Text("Currency") },
-            modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }
@@ -355,13 +326,8 @@ private fun CurrencyDropdown(
         ) {
             CurrencyInfo.AVAILABLE.forEach { currency ->
                 DropdownMenuItem(
-                    onClick = {
-                        expanded = false
-                        onCurrencySelected(currency.code)
-                    },
-                    text = {
-                        Text("${currency.symbol}  ${currency.code} - ${currency.name}")
-                    }
+                    onClick = { expanded = false; onCurrencySelected(currency.code) },
+                    text = { Text("${currency.symbol}  ${currency.code} - ${currency.name}") }
                 )
             }
         }
