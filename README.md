@@ -1,104 +1,63 @@
-# Where is my money?
+<div align="center">
 
-> A private, 100 % offline Android app for tracking shared expenses, IOUs, and debts with friends and family.
+# 💸 Where is my money?
 
-Track who owes you, who you owe, and see the big picture — all stored locally on your device. No accounts, no cloud, no tracking.
+**A private, 100% offline Android app for tracking shared expenses, IOUs, and debts with friends and family.**
 
----
+![Kotlin](https://img.shields.io/badge/kotlin-%230095D5.svg?style=flat-square&logo=kotlin&logoColor=white)
+![Android API](https://img.shields.io/badge/API-31%2B-brightgreen.svg?style=flat-square&logo=android)
+![Material Design 3](https://img.shields.io/badge/UI-Material_3-blueviolet.svg?style=flat-square)
+![License](https://img.shields.io/github/license/lciszewski27/where-is-my-money?style=flat-square)
 
-## Features
+Track who owes you, who you owe, and see the big picture — all stored locally on your device. <br> **No accounts, no cloud, no tracking.**
 
-### Dashboard
-- **At-a-glance summary** — total receivables, payables, and net balance in your primary currency.
-- **Contact list** with per-person balance and quick-swipe actions (swipe right → "They Owe Me", swipe left → "I Owe Them").
-- **Search & filter** — find contacts by name; filter by "All", "They Owe", or "I Owe".
-- **Bottom summary bar** with animated counters showing live totals.
+| Dashboard | Add Debt | Details | Settings |
+| :---: | :---: | :---: | :---: |
+| <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/dashboard.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/add_debt.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/details.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/settings.png" width="200"/> |
 
-### Person Detail
-- **Profile view** with deterministic colour avatar and net balance.
-- **Transaction history** — every debt listed with amount, date, description, and settled status.
-- **Toggle settled** — check off individual debts as paid.
-- **Settle All** — mark every debt with a person as settled in one tap.
-- **Share Reminder** — compose and send an Android share intent with an outstanding-balance reminder.
-
-### Add / Edit Debt
-- **Debt type selector** — "They Owe Me" or "I Owe Them".
-- **Amount input** with real-time parsing to cents and validation.
-- **Multi-currency support** — 17 currencies built in, all stored as minor units.
-- **Contact picker** — search existing contacts or create a new one inline.
-- **Optional description & due date** — Material 3 date picker.
-
-### Settings
-- **Primary currency** — choose the currency all totals are displayed in.
-- **Appearance** — Material You dynamic colour toggle, light/ dark/ system theme.
-- **Exchange rates** — add and manage custom local exchange rates for cross-currency debt tracking.
-- **Backup & Data** — export/ import full JSON backup (no cloud, no sync — fully offline).
-
-### Architecture & Design
-- **Clean Architecture** with three layers: `data`, `domain`, `ui`.
-- **Single-Activity** with Jetpack Compose Navigation (type-safe `@Serializable` routes).
-- **Room** for local persistence with reactive `Flow`-based DAOs.
-- **Jetpack DataStore** for user preferences.
-- **Manual DI** via the `Application` class (no Dagger/ Hilt — keeps the APK lean and the dependency graph traceable).
-- **M3 Design System** — custom colour palette, expressive shapes, and rich typography.
+</div>
 
 ---
 
-## Tech Stack
+## ✨ Features
 
-| Layer         | Technology                                                   |
-|---------------|--------------------------------------------------------------|
-| Language      | Kotlin                                                       |
-| UI            | Jetpack Compose (Material 3)                                 |
-| Navigation    | Navigation Compose (type-safe routes with `kotlinx.serialization`) |
-| Database      | Room (KSP)                                                   |
-| Preferences   | Jetpack DataStore Preferences                                |
-| Serialization | `kotlinx.serialization` (JSON routes + backup export)        |
-| Build         | Gradle with Kotlin DSL & Version Catalog (`libs.versions.toml`) |
-| Min SDK       | 31                                                           |
-| Target SDK    | 37                                                           |
+*   🔒 **Privacy First:** Data never leaves your device. No cloud sync, no network permission, and no account requirement.
+*   📊 **Smart Dashboard:** At-a-glance summaries for total receivables, payables, and net balance. Bottom summary bar features animated live counters.
+*   👤 **Intuitive Contacts:** Swipe right for "They Owe Me", swipe left for "I Owe Them". Features deterministic color avatars.
+*   💱 **Multi-Currency:** 17 built-in currencies (stored as minor units). Add custom local exchange rates for cross-currency tracking.
+*   ✅ **Frictionless Settlements:** Toggle individual debts as paid, or use "Settle All" to clear a person's balance in one tap.
+*   🔔 **Share Reminders:** Compose and send an Android share intent with an outstanding-balance reminder directly to your contact.
+*   🎨 **Modern UI/UX:** Built with Material You dynamic colors, expressive shapes, and support for light/dark/system themes.
+*   💾 **Local Backups:** Export and import full JSON backups via Android's Storage Access Framework (SAF).
 
----
+## 🛠 Tech Stack & Architecture
 
-## Build & Run
+Built with modern Android development principles, focusing on a lean APK and traceable dependencies. 
+
+*   **Architecture:** Clean Architecture (`data`, `domain`, `ui`) & Single-Activity.
+*   **Dependency Injection:** Manual DI via the `Application` class (No Dagger/Hilt).
+*   **UI:** Jetpack Compose (Material 3).
+*   **Navigation:** Navigation Compose with type-safe `@Serializable` routes.
+*   **Database:** Room (KSP) with reactive `Flow`-based DAOs.
+*   **Storage & Prefs:** Jetpack DataStore Preferences & `kotlinx.serialization` (JSON routes + backups).
+*   **Build:** Gradle with Kotlin DSL & Version Catalog (`libs.versions.toml`).
+
+## 🚀 Build & Run
 
 ### Prerequisites
-- Android Studio Hedgehog (2023.1.1) or newer
-- JDK 17
-- An Android device/ emulator running API 31+
+*   Android Studio Hedgehog (2023.1.1) or newer
+*   JDK 17
+*   An Android device/emulator running API 31+
 
-### Steps
+### Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/whereismymoney.git
-cd Whereismymoney
+# 1. Clone the repository
+git clone [https://github.com/your-username/whereismymoney.git](https://github.com/your-username/whereismymoney.git)
+cd whereismymoney
 
-# Build the debug APK
+# 2. Build the debug APK
 ./gradlew assembleDebug
 
-# Run on a connected device
+# 3. Run on a connected device
 ./gradlew installDebug
-```
-
-Or open the project in Android Studio and press **Run** (Shift+F10).
-
----
-
-## Configuration
-
-### Exchange Rates
-Currency conversion is fully local. Add custom rates in **Settings → Exchange Rates**. If no rate is configured for a pair, the engine falls back to 1:1.
-
-### Supported Currencies
-PLN, EUR, USD, GBP, CHF, CZK, JPY, CNY, SEK, NOK, DKK, HUF, RON, BGN, TRY, AUD, CAD.
-
----
-
-## Backups
-
-All data is stored in a local Room database (`whereismymoney.db`). Use **Settings → Backup & Data** to export a JSON backup (saved via Android's `SAF` file picker) or import a previously exported file.
-
-**Data never leaves your device** — there is no cloud sync, no network permission, and no account requirement.
-
----

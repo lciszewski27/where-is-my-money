@@ -22,4 +22,8 @@ sealed interface PersonDetailUiEvent {
     data class DeleteDebt(val debtId: String) : PersonDetailUiEvent
     data class ToggleSettled(val debtId: String) : PersonDetailUiEvent
     data object AddDebt : PersonDetailUiEvent
+    data object DeletePerson : PersonDetailUiEvent
+    data class PartialSettle(val debtId: String, val amountCents: Long) : PersonDetailUiEvent
+    data class UpdatePerson(val name: String, val colorSeed: Long) : PersonDetailUiEvent
+    data class EditDebt(val debtId: String) : PersonDetailUiEvent
 }

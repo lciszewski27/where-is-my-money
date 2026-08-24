@@ -225,9 +225,24 @@ fun AppNavHost(
             }
 
             LaunchedEffect(Unit) {
+                personDetailViewModel.navigateBack.collect {
+                    navController.popBackStack()
+                }
+            }
+
+            LaunchedEffect(Unit) {
                 personDetailViewModel.navigateToAddDebt.collect { personId ->
                     editingDebtId = null
                     initialPersonId = personId
+                    initialDebtType = null
+                    showAddDebtSheet = true
+                }
+            }
+
+            LaunchedEffect(Unit) {
+                personDetailViewModel.navigateToEditDebt.collect { debtId ->
+                    editingDebtId = debtId
+                    initialPersonId = null
                     initialDebtType = null
                     showAddDebtSheet = true
                 }

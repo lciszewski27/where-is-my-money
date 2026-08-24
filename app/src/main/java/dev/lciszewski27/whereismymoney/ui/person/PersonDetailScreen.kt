@@ -1,5 +1,6 @@
 package dev.lciszewski27.whereismymoney.ui.person
 
+import androidx.compose.foundation.clickable
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,10 +47,12 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -77,7 +80,16 @@ import kotlin.math.abs
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material3.FloatingActionButton
+
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+
+import androidx.compose.material3.Slider
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.SliderDefaults
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,6 +100,233 @@ fun PersonDetailScreen(
 ) {
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showMenu by remember { mutableStateOf(false) }
+    var showDeleteConfirm by remember { mutableStateOf(false) }
+    var splitPayoffDebtId by remember { mutableStateOf<String?>(null) }
+    var showEditPersonDialog by remember { mutableStateOf(false) }
+
+    if (showEditPersonDialog && uiState.person != null) {
+        var name by remember { mutableStateOf(uiState.person.name) }
+        var colorSeed by remember { mutableStateOf(uiState.person.colorSeed) }
+        
+        AlertDialog(
+            onDismissRequest = { showEditPersonDialog = false },
+            title = { Text("Edit Person") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
+                    Column {
+                        Text("Avatar Color", style = MaterialTheme.typography.labelMedium)
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            PersonAvatar(name = name, colorSeed = colorSeed, size = 56.dp)
+                            Button(
+                                onClick = { colorSeed = System.currentTimeMillis() },
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondaryContainer, contentColor = MaterialTheme.colorScheme.onSecondaryContainer)
+                            ) {
+                                Text("Shuffle Color")
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onEvent(PersonDetailUiEvent.UpdatePerson(name, colorSeed))
+                        showEditPersonDialog = false
+                    },
+                    enabled = name.isNotBlank()
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditPersonDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    if (splitPayoffDebtId != null) {
+        val debt = uiState.debts.find { it.id == splitPayoffDebtId }
+        if (debt != null) {
+            val currencySymbol = CurrencyInfo.fromCode(debt.currency).symbol
+            val totalAmountMajor = debt.amountCents / 100.0
+            
+            var payoffCents by remember { mutableStateOf(0L) }
+            var amountText by remember { mutableStateOf("") }
+            
+            // Sync text field with payoffCents when it changes from slider/chips
+            LaunchedEffect(payoffCents) {
+                if (parseInputToCents(amountText) != payoffCents) {
+                    amountText = if (payoffCents == 0L) "" else (payoffCents / 100.0).toString()
+                }
+            }
+
+            AlertDialog(
+                onDismissRequest = { splitPayoffDebtId = null },
+                title = { 
+                    Column {
+                        Text("Partial Payoff", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Original: ${totalAmountMajor}${currencySymbol}", 
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        // ── Visual Slider ────────────────────────────────
+                        Column {
+                            val sliderValue = payoffCents.toFloat() / debt.amountCents.toFloat()
+                            Slider(
+                                value = sliderValue.coerceIn(0f, 1f),
+                                onValueChange = { 
+                                    payoffCents = (it * debt.amountCents).toLong()
+                                },
+                                colors = SliderDefaults.colors(
+                                    thumbColor = MaterialTheme.colorScheme.primary,
+                                    activeTrackColor = MaterialTheme.colorScheme.primary,
+                                    inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
+                                )
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text("0%", style = MaterialTheme.typography.labelSmall)
+                                Text("50%", style = MaterialTheme.typography.labelSmall)
+                                Text("100%", style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+
+                        // ── Percentage Chips ─────────────────────────────
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            listOf(0.25f, 0.5f, 0.75f, 1f).forEach { percent ->
+                                val label = if (percent == 1f) "Full" else "${(percent * 100).toInt()}%"
+                                AssistChip(
+                                    onClick = { payoffCents = (debt.amountCents * percent).toLong() },
+                                    label = { Text(label) },
+                                    modifier = Modifier.weight(1f),
+                                    colors = AssistChipDefaults.assistChipColors(
+                                        labelColor = if (payoffCents == (debt.amountCents * percent).toLong()) 
+                                            MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                                    )
+                                )
+                            }
+                        }
+
+                        // ── Amount Input ─────────────────────────────────
+                        OutlinedTextField(
+                            value = amountText,
+                            onValueChange = { 
+                                amountText = it.filter { c -> c.isDigit() || c == '.' || c == ',' }
+                                payoffCents = parseInputToCents(amountText).coerceIn(0, debt.amountCents)
+                            },
+                            label = { Text("Amount paid") },
+                            placeholder = { Text("0.00") },
+                            suffix = { Text(currencySymbol) },
+                            singleLine = true,
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Decimal),
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = MaterialTheme.shapes.medium
+                        )
+
+                        // ── Impact Summary ────────────────────────────────
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+                            ),
+                            shape = MaterialTheme.shapes.medium
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp).fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Column {
+                                    Text("Paying", style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        "${payoffCents / 100.0}${currencySymbol}", 
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFF2E7D32)
+                                    )
+                                }
+                                Column(horizontalAlignment = Alignment.End) {
+                                    Text("Remaining", style = MaterialTheme.typography.labelSmall)
+                                    Text(
+                                        "${(debt.amountCents - payoffCents) / 100.0}${currencySymbol}", 
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            if (payoffCents > 0) {
+                                onEvent(PersonDetailUiEvent.PartialSettle(debt.id, payoffCents))
+                                splitPayoffDebtId = null
+                            }
+                        },
+                        enabled = payoffCents > 0,
+                        shape = MaterialTheme.shapes.medium
+                    ) {
+                        Text("Confirm Payoff")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { splitPayoffDebtId = null }) {
+                        Text("Cancel")
+                    }
+                },
+                shape = MaterialTheme.shapes.extraLarge
+            )
+        }
+    }
+
+    if (showDeleteConfirm) {
+        AlertDialog(
+            onDismissRequest = { showDeleteConfirm = false },
+            title = { Text("Delete Person") },
+            text = { Text("Are you sure you want to delete this person and all related transactions? This action cannot be undone.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onEvent(PersonDetailUiEvent.DeletePerson)
+                        showDeleteConfirm = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteConfirm = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
 
     Scaffold(
         modifier = modifier
@@ -100,7 +339,7 @@ fun PersonDetailScreen(
                         Column {
                             Text(uiState.person.name, fontWeight = FontWeight.Black)
                             Text(
-                                "Profile Details", 
+                                "Person Overview", 
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.primary
                             )
@@ -121,10 +360,10 @@ fun PersonDetailScreen(
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Delete Contact") },
+                            text = { Text("Delete Person") },
                             onClick = {
                                 showMenu = false
-                                // onEvent(PersonDetailUiEvent.DeletePerson) // Need to add this event
+                                showDeleteConfirm = true
                             },
                             leadingIcon = { Icon(Icons.Default.DeleteOutline, null, tint = MaterialTheme.colorScheme.error) }
                         )
@@ -154,7 +393,7 @@ fun PersonDetailScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 32.dp),
+            contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // ── Profile Header ────────────────────────────────────────
@@ -164,7 +403,8 @@ fun PersonDetailScreen(
                         person = person,
                         netCents = uiState.netCents,
                         netCurrency = uiState.netCurrency,
-                        activeCount = uiState.debts.count { !it.isSettled }
+                        activeCount = uiState.debts.count { !it.isSettled },
+                        onEditClick = { showEditPersonDialog = true }
                     )
                 }
             }
@@ -180,7 +420,7 @@ fun PersonDetailScreen(
                     Button(
                         onClick = { onEvent(PersonDetailUiEvent.SettleAll) },
                         modifier = Modifier.weight(1.2f),
-                        shape = MaterialTheme.shapes.extraLarge,
+                        shape = MaterialTheme.shapes.large,
                         contentPadding = PaddingValues(vertical = 14.dp)
                     ) {
                         Icon(Icons.Filled.DoneAll, null, Modifier.size(20.dp))
@@ -190,7 +430,7 @@ fun PersonDetailScreen(
                     FilledTonalButton(
                         onClick = { onEvent(PersonDetailUiEvent.SendReminder) },
                         modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.extraLarge,
+                        shape = MaterialTheme.shapes.large,
                         contentPadding = PaddingValues(vertical = 14.dp)
                     ) {
                         Icon(Icons.Filled.Share, null, Modifier.size(20.dp))
@@ -204,7 +444,7 @@ fun PersonDetailScreen(
             item {
                 Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                     Text(
-                        text = "Recent Activity",
+                        text = "History",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Black,
                         modifier = Modifier.padding(bottom = 8.dp)
@@ -222,7 +462,9 @@ fun PersonDetailScreen(
                     DebtItem(
                         debt = debt,
                         onToggleSettled = { onEvent(PersonDetailUiEvent.ToggleSettled(debt.id)) },
-                        onDelete = { onEvent(PersonDetailUiEvent.DeleteDebt(debt.id)) }
+                        onDelete = { onEvent(PersonDetailUiEvent.DeleteDebt(debt.id)) },
+                        onSplitPayoff = { splitPayoffDebtId = debt.id },
+                        onEditDebt = { onEvent(PersonDetailUiEvent.EditDebt(debt.id)) }
                     )
                 }
             }
@@ -235,7 +477,8 @@ private fun ProfileHeader(
     person: Person,
     netCents: Long,
     netCurrency: String,
-    activeCount: Int
+    activeCount: Int,
+    onEditClick: () -> Unit
 ) {
     val currencySymbol = CurrencyInfo.fromCode(netCurrency).symbol
     val isPositive = netCents > 0
@@ -260,7 +503,7 @@ private fun ProfileHeader(
                 size = 120.dp
             )
             FilledTonalIconButton(
-                onClick = { /* TODO: Change avatar or color */ },
+                onClick = { onEditClick() },
                 modifier = Modifier.size(36.dp),
                 shape = CircleShape
             ) {
@@ -305,7 +548,9 @@ private fun ProfileHeader(
 private fun DebtItem(
     debt: Debt,
     onToggleSettled: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onSplitPayoff: () -> Unit,
+    onEditDebt: () -> Unit
 ) {
     val currencySymbol = CurrencyInfo.fromCode(debt.currency).symbol
     val sign = if (debt.type == DebtType.THEY_OWE_ME) "+" else "-"
@@ -316,9 +561,12 @@ private fun DebtItem(
         else -> MaterialTheme.colorScheme.error
     }
 
+    var showItemMenu by remember { mutableStateOf(false) }
+
     ListItem(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { showItemMenu = true }
             .padding(horizontal = 8.dp),
         headlineContent = {
             Text(
@@ -339,20 +587,59 @@ private fun DebtItem(
             }
         },
         trailingContent = {
-            Column(horizontalAlignment = Alignment.End) {
-                Text(
-                    text = "$sign${debt.amountCents / 100}.${(debt.amountCents % 100).toString().padStart(2, '0')}$currencySymbol",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Black,
-                    color = amountColor
-                )
-                if (debt.isSettled) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (!debt.isSettled) {
+                    IconButton(onClick = onSplitPayoff) {
+                        Icon(
+                            Icons.Default.Payments, 
+                            contentDescription = "Partial Payoff",
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+                Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        "Settled",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = Color(0xFF2E7D32),
-                        fontWeight = FontWeight.Bold
+                        text = "$sign${debt.amountCents / 100}.${(debt.amountCents % 100).toString().padStart(2, '0')}$currencySymbol",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Black,
+                        color = amountColor
                     )
+                    if (debt.isSettled) {
+                        Text(
+                            "Settled",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = Color(0xFF2E7D32),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+                
+                Box {
+                    IconButton(onClick = { showItemMenu = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Item actions", modifier = Modifier.size(20.dp))
+                    }
+                    DropdownMenu(
+                        expanded = showItemMenu,
+                        onDismissRequest = { showItemMenu = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Edit") },
+                            onClick = {
+                                showItemMenu = false
+                                onEditDebt()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Edit, null) }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Delete") },
+                            onClick = {
+                                showItemMenu = false
+                                onDelete()
+                            },
+                            leadingIcon = { Icon(Icons.Default.Delete, null, tint = MaterialTheme.colorScheme.error) }
+                        )
+                    }
                 }
             }
         },
@@ -398,6 +685,20 @@ private fun EmptyDebtsPlaceholder() {
 private fun formatTimestamp(epoch: Long): String {
     val fmt = SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
     return fmt.format(Date(epoch))
+}
+
+private fun parseInputToCents(input: String): Long {
+    val normalized = input.replace(',', '.')
+    val parts = normalized.split(".")
+    return when {
+        parts.size == 1 -> (normalized.toLongOrNull() ?: 0L) * 100
+        parts.size == 2 -> {
+            val major = parts[0].toLongOrNull() ?: 0L
+            val minor = parts[1].take(2).padEnd(2, '0').toLongOrNull() ?: 0L
+            major * 100 + minor
+        }
+        else -> 0L
+    }
 }
 
 @Preview(showBackground = true)

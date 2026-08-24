@@ -30,6 +30,9 @@ class PersonDetailViewModel(
     private val _navigateToAddDebt = MutableSharedFlow<String>()
     val navigateToAddDebt: SharedFlow<String> = _navigateToAddDebt.asSharedFlow()
 
+    private val _navigateToEditDebt = MutableSharedFlow<String>()
+    val navigateToEditDebt: SharedFlow<String> = _navigateToEditDebt.asSharedFlow()
+
     private val _shareIntent = MutableSharedFlow<String>()
     val shareIntent: SharedFlow<String> = _shareIntent.asSharedFlow()
 
@@ -93,6 +96,36 @@ class PersonDetailViewModel(
             is PersonDetailUiEvent.AddDebt -> {
                 viewModelScope.launch {
                     _navigateToAddDebt.emit(personId)
+                }
+            }
+            is PersonDetailUiEvent.DeletePerson -> {
+                viewModelScope.launch {
+                    repository.deletePerson(personId)
+                    _navigateBack.emit(Unit)
+                }
+            }
+            is PersonDetailUiEvent.PartialSettle -> {
+                viewModelScope.launch {
+                    val debt = repository.getDebt(event.debtId) ?: return@launch
+                    if (event.amountCents >= debt.amountCents) {
+                        // Full settle
+                        repository.updateDebt(debt.copy(isSettled = true))
+                    } else if (event.amountCents > 0) {
+                        // Partial settle: reduce original debt and maybe create a history record?
+                        // For simplicity, we just reduce the amount of the current debt.
+                        repository.updateDebt(debt.copy(amountCents = debt.amountCents - event.amountCents))
+                    }
+                }
+            }
+            is PersonDetailUiEvent.UpdatePerson -> {
+                viewModelScope.launch {
+                    val person = repository.getPerson(personId) ?: return@launch
+                    repository.insertPerson(person.copy(name = event.name, colorSeed = event.colorSeed))
+                }
+            }
+            is PersonDetailUiEvent.EditDebt -> {
+                viewModelScope.launch {
+                    _navigateToEditDebt.emit(event.debtId)
                 }
             }
         }

@@ -142,7 +142,7 @@ fun AddDebtSheetContent(
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             OutlinedTextField(
                 value = uiState.amountText,
@@ -150,17 +150,19 @@ fun AddDebtSheetContent(
                 label = { Text("Amount") },
                 placeholder = { Text("0.00") },
                 leadingIcon = {
-                    Icon(Icons.Filled.AttachMoney, contentDescription = null)
+                    Icon(Icons.Filled.AttachMoney, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
-                modifier = Modifier.weight(1f),
-                shape = MaterialTheme.shapes.medium
+                modifier = Modifier.weight(1.5f),
+                shape = MaterialTheme.shapes.medium,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
             )
 
             CurrencyDropdown(
                 selectedCurrency = uiState.currency,
-                onCurrencySelected = { onEvent(AddDebtUiEvent.CurrencyChanged(it)) }
+                onCurrencySelected = { onEvent(AddDebtUiEvent.CurrencyChanged(it)) },
+                modifier = Modifier.weight(1f)
             )
         }
 
@@ -169,7 +171,7 @@ fun AddDebtSheetContent(
             val person = uiState.persons.firstOrNull { it.id == uiState.selectedPersonId }
             if (person != null) {
                 Text(
-                    text = "Contact: ${person.name}",
+                    text = "Person: ${person.name}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.primary
@@ -217,7 +219,7 @@ fun AddDebtSheetContent(
                                 onEvent(AddDebtUiEvent.ToggleNewPersonField)
                             },
                             leadingIcon = { Icon(Icons.Filled.PersonAdd, null) },
-                            text = { Text("Create new contact") }
+                            text = { Text("Create new person") }
                         )
                         
                         if (uiState.persons.isNotEmpty()) {
@@ -324,14 +326,16 @@ fun AddDebtSheetContent(
 @Composable
 private fun CurrencyDropdown(
     selectedCurrency: String,
-    onCurrencySelected: (String) -> Unit
+    onCurrencySelected: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
     val info = CurrencyInfo.fromCode(selectedCurrency)
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { expanded = it }
+        onExpandedChange = { expanded = it },
+        modifier = modifier
     ) {
         OutlinedTextField(
             value = "${info.symbol} ${info.code}",
@@ -340,7 +344,7 @@ private fun CurrencyDropdown(
             label = { Text("Currency") },
             modifier = Modifier
                 .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                .width(120.dp),
+                .fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }

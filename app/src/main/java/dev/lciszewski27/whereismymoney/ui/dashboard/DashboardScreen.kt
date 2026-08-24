@@ -83,6 +83,22 @@ import java.util.Date
 import java.util.Locale
 import kotlin.math.abs
 
+import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.systemBars
+
+import androidx.compose.material3.Button
+import androidx.compose.material3.FloatingActionButtonDefaults
+import androidx.compose.animation.fadeIn
+import androidx.compose.runtime.rememberCoroutineScope
+
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Surface
+import androidx.compose.foundation.shape.CircleShape
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -93,44 +109,47 @@ fun DashboardScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
     )
-    var showNewContactDialog by remember { mutableStateOf(false) }
+    var showNewPersonDialog by remember { mutableStateOf(false) }
 
-    if (showNewContactDialog) {
-        var newContactName by remember { mutableStateOf("") }
+    if (showNewPersonDialog) {
+        var newPersonName by remember { mutableStateOf("") }
         AlertDialog(
-            onDismissRequest = { showNewContactDialog = false },
-            title = { Text("New Contact") },
+            onDismissRequest = { showNewPersonDialog = false },
+            title = { Text("New Person", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold) },
             text = {
                 Column {
-                    Text("Enter the name of the new contact.")
-                    Spacer(Modifier.height(8.dp))
+                    Text("Enter the name of the new person.", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.height(16.dp))
                     OutlinedTextField(
-                        value = newContactName,
-                        onValueChange = { newContactName = it },
+                        value = newPersonName,
+                        onValueChange = { newPersonName = it },
                         label = { Text("Name") },
                         singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium
                     )
                 }
             },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
-                        if (newContactName.isNotBlank()) {
-                            onEvent(DashboardUiEvent.CreatePerson(newContactName))
-                            showNewContactDialog = false
+                        if (newPersonName.isNotBlank()) {
+                            onEvent(DashboardUiEvent.CreatePerson(newPersonName))
+                            showNewPersonDialog = false
                         }
                     },
-                    enabled = newContactName.isNotBlank()
+                    enabled = newPersonName.isNotBlank(),
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     Text("Create")
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showNewContactDialog = false }) {
+                TextButton(onClick = { showNewPersonDialog = false }) {
                     Text("Cancel")
                 }
-            }
+            },
+            shape = MaterialTheme.shapes.extraLarge
         )
     }
 
@@ -149,68 +168,86 @@ fun DashboardScreen(
         },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { showNewContactDialog = true },
+                onClick = { showNewPersonDialog = true },
                 shape = RoundedCornerShape(20.dp),
                 containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add contact")
+                Icon(Icons.Filled.Add, contentDescription = "Add person")
             }
         },
+
         bottomBar = {
             BottomSummaryBar(
                 summary = uiState.summary
             )
-        }
+        },
+        contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
 
         val currencySymbol = CurrencyInfo.fromCode(uiState.summary.primaryCurrency).symbol
 
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(
-                start = 16.dp, end = 16.dp,
-                top = 16.dp,
-                bottom = 88.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            // Debt type filter chips
-            item {
-                DebtFilterChips(
-                    selected = uiState.filterType,
-                    onSelect = { onEvent(DashboardUiEvent.SetFilter(it)) }
+        if (uiState.persons.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentAlignment = Alignment.Center
+            ) {
+                EmptyState(
+                    isFiltered = uiState.searchQuery.isNotEmpty() || uiState.filterType != DebtFilterType.ALL
                 )
             }
-
-            // Person count header
-            item {
-                Text(
-                    text = "${uiState.persons.size} contact${if (uiState.persons.size != 1) "s" else ""}",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(vertical = 4.dp, horizontal = 4.dp)
-                )
-            }
-
-            if (uiState.persons.isEmpty()) {
+        } else {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding),
+                contentPadding = PaddingValues(
+                    start = 16.dp, end = 16.dp,
+                    top = 16.dp,
+                    bottom = 100.dp
+                ),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Debt type filter chips
                 item {
-                    EmptyState(
-                        isFiltered = uiState.searchQuery.isNotEmpty() || uiState.filterType != DebtFilterType.ALL,
-                        modifier = Modifier.fillParentMaxSize(0.7f)
+                    DebtFilterChips(
+                        selected = uiState.filterType,
+                        onSelect = { onEvent(DashboardUiEvent.SetFilter(it)) }
                     )
                 }
-            } else {
+
+                // Person count header
+                item {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        val count = uiState.persons.size
+                        Text(
+                            text = "$count person${if (count != 1) "s" else ""}",
+                            style = MaterialTheme.typography.titleSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
                 items(uiState.persons, key = { it.id }) { person ->
-                    SwipeablePersonCard(
-                        person = person,
-                        currencySymbol = currencySymbol,
-                        onClick = { onEvent(DashboardUiEvent.OpenPerson(person.id)) },
-                        onQuickAdd = { type -> onEvent(DashboardUiEvent.QuickAddDebt(person.id, type)) }
-                    )
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = fadeIn(tween(400)) + slideInVertically(tween(400)) { it / 2 }
+                    ) {
+                        SwipeablePersonCard(
+                            person = person,
+                            currencySymbol = currencySymbol,
+                            onClick = { onEvent(DashboardUiEvent.OpenPerson(person.id)) },
+                            onQuickAdd = { type -> onEvent(DashboardUiEvent.QuickAddDebt(person.id, type)) }
+                        )
+                    }
                 }
             }
         }
@@ -229,17 +266,54 @@ private fun DashboardTopAppBar(
     var isSearchActive by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LargeTopAppBar(
-        title = {
-            if (isSearchActive) {
+    Box {
+        LargeTopAppBar(
+            title = {
+                if (!isSearchActive) {
+                    Column(modifier = Modifier.padding(vertical = 12.dp)) {
+                        Text("Where is", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.headlineMedium)
+                        Text("my money?", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.displaySmall)
+                    }
+                }
+            },
+            actions = {
+                if (!isSearchActive) {
+                    IconButton(onClick = { isSearchActive = true }) {
+                        Icon(Icons.Filled.Search, contentDescription = "Search")
+                    }
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                    }
+                }
+            },
+            scrollBehavior = scrollBehavior,
+            colors = TopAppBarDefaults.largeTopAppBarColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+                scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
+            )
+        )
+
+        if (isSearchActive) {
+            Surface(
+                modifier = Modifier.fillMaxWidth().height(64.dp), // Standard TopAppBar height
+                color = MaterialTheme.colorScheme.surface,
+                tonalElevation = 3.dp
+            ) {
                 SearchBar(
                     query = searchQuery,
                     onQueryChange = onSearchQueryChange,
                     onSearch = { keyboardController?.hide() },
                     active = false,
                     onActiveChange = {},
-                    placeholder = { Text("Search contacts...") },
-                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    placeholder = { Text("Search people...") },
+                    leadingIcon = { 
+                        IconButton(onClick = { 
+                            isSearchActive = false
+                            onClearSearch()
+                        }) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {
                             IconButton(onClick = onClearSearch) {
@@ -247,36 +321,16 @@ private fun DashboardTopAppBar(
                             }
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().padding(end = 16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
                     colors = SearchBarDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        containerColor = Color.Transparent
                     )
                 ) {}
-            } else {
-                Column {
-                    Text("Where is", fontWeight = FontWeight.Black)
-                    Text("my money?", fontWeight = FontWeight.Black, color = MaterialTheme.colorScheme.primary)
-                }
             }
-        },
-        actions = {
-            IconButton(onClick = { isSearchActive = !isSearchActive }) {
-                Icon(
-                    if (isSearchActive) Icons.Filled.Close else Icons.Filled.Search,
-                    contentDescription = "Search"
-                )
-            }
-            IconButton(onClick = onOpenSettings) {
-                Icon(Icons.Filled.Settings, contentDescription = "Settings")
-            }
-        },
-        scrollBehavior = scrollBehavior,
-        colors = TopAppBarDefaults.largeTopAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
-        )
-    )
+        }
+    }
 }
+
 
 @Composable
 private fun DebtFilterChips(
@@ -417,7 +471,7 @@ private fun PersonCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
@@ -434,11 +488,13 @@ private fun PersonCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = person.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "Added ${formatTimestamp(person.createdAt)}",
+                    text = "Created ${formatTimestamp(person.createdAt)}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -450,12 +506,13 @@ private fun PersonCard(
                            else if (isPositive) "Owes you" 
                            else "You owe",
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.outline
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
                 )
                 Text(
                     text = "${if (person.balanceCents < 0) "-" else ""}${abs(person.balanceCents) / 100}.${(abs(person.balanceCents) % 100).toString().padStart(2, '0')}$currencySymbol",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.ExtraBold,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Black,
                     color = balanceColor
                 )
             }
@@ -464,8 +521,8 @@ private fun PersonCard(
             Icon(
                 Icons.Filled.ChevronRight,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.outlineVariant,
-                modifier = Modifier.size(20.dp)
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                modifier = Modifier.size(24.dp)
             )
         }
     }
@@ -483,26 +540,36 @@ private fun EmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Icon(
-            if (isFiltered) Icons.Default.Search else Icons.Outlined.PersonOff,
-            contentDescription = null,
-            modifier = Modifier.size(80.dp),
-            tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
-        )
-        Spacer(Modifier.height(24.dp))
+        Surface(
+            modifier = Modifier.size(120.dp),
+            shape = CircleShape,
+            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    if (isFiltered) Icons.Default.Search else Icons.Outlined.PersonOff,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+            }
+        }
+        Spacer(Modifier.height(32.dp))
         Text(
-            text = if (isFiltered) "No results found" else "No contacts yet",
+            text = if (isFiltered) "No results found" else "Your list is empty",
             style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
+            fontWeight = FontWeight.Black,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
         Text(
-            text = if (isFiltered) "Try adjusting your search or filters" 
-                   else "Tap the + button to add your first transaction",
-            style = MaterialTheme.typography.bodyMedium,
+            text = if (isFiltered) "Try adjusting your search or filters to find what you're looking for." 
+                   else "Tap the + button to add your first person and start tracking debts.",
+            style = MaterialTheme.typography.bodyLarge,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
     }
 }
