@@ -76,6 +76,9 @@ dependencies {
     // Serialization (for routes & JSON export)
     implementation(libs.kotlinx.serialization.json)
 
+    // Coil (image loading for contributor avatars)
+    implementation(libs.coil.compose)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

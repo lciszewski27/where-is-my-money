@@ -27,4 +27,5 @@ sealed interface SettingsUiEvent {
     data object ExportBackup : SettingsUiEvent
     data object ImportBackup : SettingsUiEvent
     data object NavigateBack : SettingsUiEvent
+    data object OpenContributors : SettingsUiEvent
 }

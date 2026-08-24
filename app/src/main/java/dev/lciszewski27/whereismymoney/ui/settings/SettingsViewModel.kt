@@ -3,13 +3,9 @@ package dev.lciszewski27.whereismymoney.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lciszewski27.whereismymoney.data.local.preferences.UserPreferencesDataStore
-import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.usecase.CurrencyConversionUseCase
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
@@ -22,15 +18,6 @@ class SettingsViewModel(
 
     private val _uiState = MutableStateFlow(SettingsUiState())
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
-
-    private val _navigateBack = MutableSharedFlow<Unit>()
-    val navigateBack: SharedFlow<Unit> = _navigateBack.asSharedFlow()
-
-    private val _exportTrigger = MutableSharedFlow<Unit>()
-    val exportTrigger: SharedFlow<Unit> = _exportTrigger.asSharedFlow()
-
-    private val _importTrigger = MutableSharedFlow<Unit>()
-    val importTrigger: SharedFlow<Unit> = _importTrigger.asSharedFlow()
 
     init {
         loadPreferences()
@@ -86,15 +73,10 @@ class SettingsViewModel(
                 currencyConversion.removeRate(event.from, event.to)
                 _uiState.update { it.copy(exchangeRates = currencyConversion.getAllRates()) }
             }
-            is SettingsUiEvent.ExportBackup -> {
-                viewModelScope.launch { _exportTrigger.emit(Unit) }
-            }
-            is SettingsUiEvent.ImportBackup -> {
-                viewModelScope.launch { _importTrigger.emit(Unit) }
-            }
-            is SettingsUiEvent.NavigateBack -> {
-                viewModelScope.launch { _navigateBack.emit(Unit) }
-            }
+            is SettingsUiEvent.ExportBackup -> {}
+            is SettingsUiEvent.ImportBackup -> {}
+            is SettingsUiEvent.NavigateBack -> {}
+            is SettingsUiEvent.OpenContributors -> {}
         }
     }
 }
