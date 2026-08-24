@@ -57,7 +57,7 @@ jobs:
 
       # 6. Podpisanie wygenerowanego pliku APK przy użyciu klucza JKS z GitHub Secrets
       - name: Sign Release APK
-        uses: rslnk/sign-android-release@v1
+        uses: r0adkll/sign-android-release@v1
         id: sign_app
         with:
           releaseDirectory: app/build/outputs/apk/release
