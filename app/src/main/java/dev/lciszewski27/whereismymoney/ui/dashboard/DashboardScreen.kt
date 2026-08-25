@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +69,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
@@ -79,7 +81,7 @@ import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
-import dev.lciszewski27.whereismymoney.ui.components.BottomSummaryBar
+import dev.lciszewski27.whereismymoney.ui.components.ExpandableBottomDrawer
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
@@ -99,6 +101,7 @@ fun DashboardScreen(
         snapAnimationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
     )
     var showNewPersonDialog by remember { mutableStateOf(false) }
+    var isDrawerExpanded by remember { mutableStateOf(false) }
 
     // ── New Person Dialog ────────────────────────────────────────────
     if (showNewPersonDialog) {
@@ -156,105 +159,135 @@ fun DashboardScreen(
     Scaffold(
         modifier = modifier
             .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
+            .then(
+                if (!isDrawerExpanded) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+                else Modifier
+            ),
         topBar = {
             DashboardTopAppBar(
                 searchQuery = uiState.searchQuery,
                 onSearchQueryChange = { onEvent(DashboardUiEvent.Search(it)) },
                 onClearSearch = { onEvent(DashboardUiEvent.ClearSearch) },
                 onOpenSettings = { onEvent(DashboardUiEvent.OpenSettings) },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
+                isDrawerExpanded = isDrawerExpanded
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = { showNewPersonDialog = true },
-                shape = MaterialTheme.shapes.large,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+            AnimatedVisibility(
+                visible = !isDrawerExpanded,
+                enter = fadeIn(),
+                exit = fadeOut()
             ) {
-                Icon(Icons.Filled.Add, contentDescription = "Add person")
+                FloatingActionButton(
+                    onClick = { showNewPersonDialog = true },
+                    shape = MaterialTheme.shapes.large,
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = "Add person")
+                }
             }
-        },
-        bottomBar = {
-            BottomSummaryBar(summary = uiState.summary)
         },
         contentWindowInsets = WindowInsets(0, 0, 0, 0)
     ) { innerPadding ->
         val currencySymbol = CurrencyInfo.fromCode(uiState.summary.primaryCurrency).symbol
 
-        Column(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
-            // ── Filter Chips — always visible ─────────────────────
-            DebtFilterChips(
-                selected = uiState.filterType,
-                onSelect = { onEvent(DashboardUiEvent.SetFilter(it)) },
-                modifier = Modifier.padding(
-                    start = MoneySpacing.md,
-                    end = MoneySpacing.md,
-                    top = MoneySpacing.md
-                )
-            )
-
-            if (uiState.persons.isEmpty()) {
-                // ── Empty state ────────────────────────────────────
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .weight(1f),
-                    contentAlignment = Alignment.Center
-                ) {
-                    EmptyState(
-                        isFiltered = uiState.searchQuery.isNotEmpty() ||
-                                uiState.filterType != DebtFilterType.ALL
+        // ── Box overlay: content + floating drawer ─────────────────
+        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+            // Content layer
+            Column(modifier = Modifier.fillMaxSize()) {
+                // Filter Chips — always visible
+                DebtFilterChips(
+                    selected = uiState.filterType,
+                    onSelect = { onEvent(DashboardUiEvent.SetFilter(it)) },
+                    modifier = Modifier.padding(
+                        start = MoneySpacing.md, end = MoneySpacing.md, top = MoneySpacing.md
                     )
-                }
-            } else {
-                // ── Person list ────────────────────────────────────
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize().weight(1f),
-                    contentPadding = PaddingValues(
-                        start = MoneySpacing.md, end = MoneySpacing.md,
-                        top = MoneySpacing.sm,
-                        bottom = 100.dp
-                    ),
-                    verticalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
-                ) {
-                    // Person count header
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = MoneySpacing.xxs),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            val count = uiState.persons.size
-                            Text(
-                                text = "$count person${if (count != 1) "s" else ""}",
-                                style = MaterialTheme.typography.titleSmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
+                )
 
-                    items(uiState.persons, key = { it.id }) { person ->
-                        AnimatedVisibility(
-                            visible = true,
-                            enter = fadeIn(animationSpec = tween(400)) +
-                                    slideInVertically(animationSpec = tween(400)) { it / 2 }
-                        ) {
-                            SwipeablePersonCard(
-                                person = person,
-                                currencySymbol = currencySymbol,
-                                onClick = { onEvent(DashboardUiEvent.OpenPerson(person.id)) },
-                                onQuickAdd = { type ->
-                                    onEvent(DashboardUiEvent.QuickAddDebt(person.id, type))
-                                }
-                            )
+                if (uiState.persons.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize().weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        EmptyState(
+                            isFiltered = uiState.searchQuery.isNotEmpty() ||
+                                    uiState.filterType != DebtFilterType.ALL
+                        )
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier.fillMaxSize().weight(1f),
+                        userScrollEnabled = !isDrawerExpanded,
+                        contentPadding = PaddingValues(
+                            start = MoneySpacing.md, end = MoneySpacing.md,
+                            top = MoneySpacing.sm, bottom = 100.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
+                    ) {
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth().padding(horizontal = MoneySpacing.xxs),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                val count = uiState.persons.size
+                                Text(
+                                    text = "$count person${if (count != 1) "s" else ""}",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    color = MaterialTheme.colorScheme.primary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
+                        items(uiState.persons, key = { it.id }) { person ->
+                            AnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(animationSpec = tween(400)) +
+                                        slideInVertically(animationSpec = tween(400)) { it / 2 }
+                            ) {
+                                SwipeablePersonCard(
+                                    person = person,
+                                    currencySymbol = currencySymbol,
+                                    onClick = { onEvent(DashboardUiEvent.OpenPerson(person.id)) },
+                                    onQuickAdd = { type -> onEvent(DashboardUiEvent.QuickAddDebt(person.id, type)) }
+                                )
+                            }
                         }
                     }
                 }
             }
+
+            // Scrim overlay
+            AnimatedVisibility(
+                visible = isDrawerExpanded,
+                enter = fadeIn(),
+                exit = fadeOut(),
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.4f))
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null
+                        ) { isDrawerExpanded = false }
+                )
+            }
+
+            // Drawer layer — aligned to bottom, floats over content
+            ExpandableBottomDrawer(
+                summary = uiState.summary,
+                upcomingRepayments = uiState.upcomingRepayments,
+                recentActivity = uiState.recentActivity,
+                isExpanded = isDrawerExpanded,
+                onExpandedChange = { isDrawerExpanded = it },
+                onPersonClick = { personId -> onEvent(DashboardUiEvent.OpenPerson(personId)) },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
         }
     }
 }
@@ -267,7 +300,8 @@ private fun DashboardTopAppBar(
     onSearchQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
     onOpenSettings: () -> Unit,
-    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior
+    scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
+    isDrawerExpanded: Boolean
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -277,27 +311,37 @@ private fun DashboardTopAppBar(
         TopAppBar(
             title = {
                 SearchBar(
-                    query = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    onSearch = { keyboardController?.hide() },
-                    active = false,
-                    onActiveChange = {},
-                    placeholder = { Text("Search people...") },
-                    leadingIcon = {
-                        IconButton(onClick = {
-                            isSearchActive = false
-                            onClearSearch()
-                        }) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                        }
+                    inputField = {
+                        SearchBarDefaults.InputField(
+                            query = searchQuery,
+                            onQueryChange = onSearchQueryChange,
+                            onSearch = { keyboardController?.hide() },
+                            expanded = false,
+                            onExpandedChange = {},
+                            placeholder = { Text("Search people...") },
+                            leadingIcon = {
+                                IconButton(
+                                    onClick = {
+                                        isSearchActive = false
+                                        onClearSearch()
+                                    },
+                                    enabled = !isDrawerExpanded
+                                ) {
+                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                                }
+                            },
+                            trailingIcon = {
+                                if (searchQuery.isNotEmpty()) {
+                                    IconButton(onClick = onClearSearch, enabled = !isDrawerExpanded) {
+                                        Icon(Icons.Default.Clear, contentDescription = "Clear")
+                                    }
+                                }
+                            },
+                            enabled = !isDrawerExpanded
+                        )
                     },
-                    trailingIcon = {
-                        if (searchQuery.isNotEmpty()) {
-                            IconButton(onClick = onClearSearch) {
-                                Icon(Icons.Default.Clear, contentDescription = "Clear")
-                            }
-                        }
-                    },
+                    expanded = false,
+                    onExpandedChange = {},
                     modifier = Modifier.fillMaxWidth(),
                     colors = SearchBarDefaults.colors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
@@ -327,15 +371,15 @@ private fun DashboardTopAppBar(
                 }
             },
             actions = {
-                IconButton(onClick = { isSearchActive = true }) {
+                IconButton(onClick = { isSearchActive = true }, enabled = !isDrawerExpanded) {
                     Icon(Icons.Filled.Search, contentDescription = "Search")
                 }
-                IconButton(onClick = onOpenSettings) {
+                IconButton(onClick = onOpenSettings, enabled = !isDrawerExpanded) {
                     Icon(Icons.Filled.Settings, contentDescription = "Settings")
                 }
             },
             scrollBehavior = scrollBehavior,
-            colors = TopAppBarDefaults.largeTopAppBarColors(
+            colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface,
                 scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
             )
@@ -523,10 +567,8 @@ private fun PersonCard(
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = "${if (person.balanceCents < 0) "-" else ""}" +
-                            "${abs(person.balanceCents) / 100}." +
-                            "${(abs(person.balanceCents) % 100).toString().padStart(2, '0')}" +
-                            currencySymbol,
+                    text = if (person.balanceCents < 0) "-${abs(person.balanceCents) / 100}.${(abs(person.balanceCents) % 100).toString().padStart(2, '0')}$currencySymbol"
+                           else "${abs(person.balanceCents) / 100}.${(abs(person.balanceCents) % 100).toString().padStart(2, '0')}$currencySymbol",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black,
                     color = balanceColor
@@ -613,7 +655,9 @@ private fun DashboardPreview() {
                     netBalanceCents = 9100L,
                     primaryCurrency = "USD",
                     totalActiveDebts = 5
-                )
+                ),
+                upcomingRepayments = emptyList(),
+                recentActivity = emptyList()
             ),
             onEvent = {}
         )

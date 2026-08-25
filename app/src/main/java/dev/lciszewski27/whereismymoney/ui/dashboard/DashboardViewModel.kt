@@ -3,6 +3,8 @@ package dev.lciszewski27.whereismymoney.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lciszewski27.whereismymoney.data.local.preferences.UserPreferencesDataStore
+import dev.lciszewski27.whereismymoney.domain.model.Debt
+import dev.lciszewski27.whereismymoney.domain.model.DebtItemWithPerson
 import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
 import dev.lciszewski27.whereismymoney.domain.usecase.GetDashboardSummaryUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -12,7 +14,6 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
@@ -64,11 +65,36 @@ class DashboardViewModel(
                     }
                 }
 
-                combine(personsFlow, summaryFlow) { persons, summary ->
+                // Observe all debts + persons for upcoming repayments & activity
+                val allDebtsFlow = repository.observeAllDebts()
+                val allPersonsFlow = repository.observePersons()
+
+                combine(
+                    personsFlow, summaryFlow, allDebtsFlow, allPersonsFlow
+                ) { persons, summary, allDebts, allPersons ->
+                    val personMap = allPersons.associateBy { it.id }
+
+                    // Upcoming: active debts with a due date, sorted by nearest first
+                    val upcoming = allDebts
+                        .filter { !it.isSettled && it.dueDateMillis != null }
+                        .sortedBy { it.dueDateMillis }
+                        .take(10)
+                        .map { toDebtItemWithPerson(it, personMap) }
+                        .filterNotNull()
+
+                    // Recent activity: all debts sorted by timestamp desc
+                    val recent = allDebts
+                        .sortedByDescending { it.timestamp }
+                        .take(20)
+                        .map { toDebtItemWithPerson(it, personMap) }
+                        .filterNotNull()
+
                     _uiState.update { state ->
                         state.copy(
                             persons = persons,
                             summary = summary,
+                            upcomingRepayments = upcoming,
+                            recentActivity = recent,
                             isLoading = false
                         )
                     }
@@ -76,6 +102,18 @@ class DashboardViewModel(
             }
             .collect { }
         }
+    }
+
+    private fun toDebtItemWithPerson(
+        debt: Debt,
+        personMap: Map<String, dev.lciszewski27.whereismymoney.domain.model.Person>
+    ): DebtItemWithPerson? {
+        val person = personMap[debt.personId] ?: return null
+        return DebtItemWithPerson(
+            debt = debt,
+            personName = person.name,
+            personColorSeed = person.colorSeed
+        )
     }
 
     fun onEvent(event: DashboardUiEvent) {

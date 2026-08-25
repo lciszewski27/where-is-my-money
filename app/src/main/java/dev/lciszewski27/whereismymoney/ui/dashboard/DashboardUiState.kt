@@ -1,6 +1,7 @@
 package dev.lciszewski27.whereismymoney.ui.dashboard
 
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
+import dev.lciszewski27.whereismymoney.domain.model.DebtItemWithPerson
 import dev.lciszewski27.whereismymoney.domain.model.Person
 
 /**
@@ -11,7 +12,11 @@ data class DashboardUiState(
     val summary: DashboardSummary = DashboardSummary(),
     val searchQuery: String = "",
     val isLoading: Boolean = true,
-    val filterType: DebtFilterType = DebtFilterType.ALL
+    val filterType: DebtFilterType = DebtFilterType.ALL,
+    /** Next 10 upcoming repayments sorted by nearest due date. */
+    val upcomingRepayments: List<DebtItemWithPerson> = emptyList(),
+    /** Chronological log of recent debt activity (max 20). */
+    val recentActivity: List<DebtItemWithPerson> = emptyList()
 )
 
 enum class DebtFilterType {
