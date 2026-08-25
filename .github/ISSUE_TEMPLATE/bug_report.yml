@@ -1,0 +1,56 @@
+name: Bug Report
+description: Create a report to help us improve "Where is my money?"
+title: "[BUG] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report! Please provide as much detail as possible.
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the bug is.
+      placeholder: Describe the issue here...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this problem?
+      placeholder: |
+        1. Open the app
+        2. Click on '...'
+        3. See error
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Smartphone Model
+      description: What device are you using?
+      placeholder: e.g., Google Pixel 7
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android Version
+      description: What version of Android is running on your device?
+      placeholder: e.g., Android 14
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: App Version
+      description: Which version of the app are you using? (e.g., v1.0.0)
+    validations:
+      required: true
+  - type: textarea
+    id: logs-screenshots
+    attributes:
+      label: Logs / Screenshots
+      description: Drop any screenshots, screen recordings, or crash logs here.
