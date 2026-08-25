@@ -37,16 +37,22 @@ class AddDebtViewModel(
             viewModelScope.launch {
                 loadDebtForEdit(editDebtId)
             }
-        } else if (initialPersonId != null) {
-            viewModelScope.launch {
-                val person = repository.getPerson(initialPersonId)
-                if (person != null) {
-                    _uiState.update { state ->
-                        state.copy(
-                            selectedPersonId = person.id,
-                            selectedPersonName = person.name,
-                            debtType = initialDebtType ?: state.debtType
-                        )
+        } else {
+            // Apply initial values for new debt
+            _uiState.update { state ->
+                state.copy(debtType = initialDebtType ?: state.debtType)
+            }
+
+            if (initialPersonId != null) {
+                viewModelScope.launch {
+                    val person = repository.getPerson(initialPersonId)
+                    if (person != null) {
+                        _uiState.update { state ->
+                            state.copy(
+                                selectedPersonId = person.id,
+                                selectedPersonName = person.name
+                            )
+                        }
                     }
                 }
             }

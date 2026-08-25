@@ -181,6 +181,7 @@ fun DashboardScreen(
             ) {
                 FloatingActionButton(
                     onClick = { showNewPersonDialog = true },
+                    modifier = Modifier.padding(bottom = 120.dp),
                     shape = MaterialTheme.shapes.large,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -213,8 +214,8 @@ fun DashboardScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         EmptyState(
-                            isFiltered = uiState.searchQuery.isNotEmpty() ||
-                                    uiState.filterType != DebtFilterType.ALL
+                            isFiltered = (uiState.searchQuery.isNotEmpty() ||
+                                    uiState.filterType != DebtFilterType.ALL)
                         )
                     }
                 } else {
@@ -223,7 +224,7 @@ fun DashboardScreen(
                         userScrollEnabled = !isDrawerExpanded,
                         contentPadding = PaddingValues(
                             start = MoneySpacing.md, end = MoneySpacing.md,
-                            top = MoneySpacing.sm, bottom = 100.dp
+                            top = MoneySpacing.sm, bottom = 140.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
                     ) {
@@ -251,9 +252,8 @@ fun DashboardScreen(
                                 SwipeablePersonCard(
                                     person = person,
                                     currencySymbol = currencySymbol,
-                                    onClick = { onEvent(DashboardUiEvent.OpenPerson(person.id)) },
-                                    onQuickAdd = { type -> onEvent(DashboardUiEvent.QuickAddDebt(person.id, type)) }
-                                )
+                                    onClick = { onEvent(DashboardUiEvent.OpenPerson(person.id)) }
+                                ) { type -> onEvent(DashboardUiEvent.QuickAddDebt(person.id, type)) }
                             }
                         }
                     }
@@ -427,6 +427,7 @@ private fun DebtFilterChips(
 }
 
 // ── Swipeable Person Card ────────────────────────────────────────────
+@Suppress("DEPRECATION")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeablePersonCard(

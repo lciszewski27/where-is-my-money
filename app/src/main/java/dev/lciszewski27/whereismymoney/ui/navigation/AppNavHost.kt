@@ -98,7 +98,7 @@ fun AppNavHost(
     // ── Add Debt ViewModel (only when sheet is shown) ────────────────
     val addDebtViewModel: AddDebtViewModel? = if (showAddDebtSheet) {
         viewModel(
-            key = "add_debt_${editingDebtId ?: "new"}_${initialPersonId ?: "none"}",
+            key = "add_debt_${editingDebtId ?: "new"}_${initialPersonId ?: "none"}_${initialDebtType ?: "none"}",
             factory = object : androidx.lifecycle.ViewModelProvider.Factory {
                 @Suppress("UNCHECKED_CAST")
                 override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {

@@ -22,7 +22,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FactCheck
 import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Schedule
@@ -33,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -142,7 +140,7 @@ fun ExpandableBottomDrawer(
 
                 Row(
                     Modifier.fillMaxWidth().padding(horizontal = MoneySpacing.lg, vertical = MoneySpacing.xs),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
@@ -150,21 +148,6 @@ fun ExpandableBottomDrawer(
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
-                            if (isExpanded) "Less" else "More",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(Modifier.width(2.dp))
-                        Icon(
-                            if (isExpanded) Icons.Filled.KeyboardArrowDown else Icons.Filled.KeyboardArrowUp,
-                            contentDescription = null,
-                            Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
                 }
             }
 
@@ -217,7 +200,7 @@ private fun SectionHeader(icon: ImageVector, title: String, count: Int) {
         Spacer(Modifier.width(MoneySpacing.xs))
         Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.weight(1f))
         if (count > 0) Box(Modifier.clip(MaterialTheme.shapes.small).background(MaterialTheme.colorScheme.primaryContainer).padding(horizontal = MoneySpacing.xs, vertical = 2.dp)) {
-            Text("$count", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+            Text(count.toString(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onPrimaryContainer)
         }
     }
 }
@@ -234,7 +217,7 @@ private fun EmptySection(text: String, icon: ImageVector) {
 @Composable
 private fun RepaymentRow(item: DebtItemWithPerson, onClick: () -> Unit) {
     val d = item.debt; val sign = if (d.type == DebtType.THEY_OWE_ME) "+" else "-"
-    val overdue = d.dueDateMillis != null && d.dueDateMillis < System.currentTimeMillis()
+    val overdue = d.dueDateMillis != null && (d.dueDateMillis < System.currentTimeMillis())
     val cur = CurrencyInfo.fromCode(d.currency).symbol
     Row(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = MoneySpacing.md, vertical = MoneySpacing.sm), verticalAlignment = Alignment.CenterVertically) {
         val dl = d.dueDateMillis ?: 0L
