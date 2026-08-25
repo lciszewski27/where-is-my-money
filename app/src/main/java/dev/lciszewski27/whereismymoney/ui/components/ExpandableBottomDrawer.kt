@@ -1,6 +1,7 @@
 package dev.lciszewski27.whereismymoney.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,6 +53,7 @@ import dev.lciszewski27.whereismymoney.domain.model.DebtItemWithPerson
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
+import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -73,6 +75,7 @@ fun ExpandableBottomDrawer(
     modifier: Modifier = Modifier
 ) {
     val density = LocalDensity.current
+    val animationsEnabled = LocalAnimationsEnabled.current
     val displayCurrency = CurrencyInfo.fromCode(summary.primaryCurrency).symbol
     var dragOffsetPx by remember { mutableFloatStateOf(0f) }
 
@@ -84,7 +87,7 @@ fun ExpandableBottomDrawer(
 
     val translationY by animateFloatAsState(
         targetValue = targetTranslationPx + dragOffsetPx,
-        animationSpec = spring(dampingRatio = 0.85f, stiffness = 350f),
+        animationSpec = if (animationsEnabled) spring(dampingRatio = 0.85f, stiffness = 350f) else snap(),
         label = "drawerTranslation"
     )
 

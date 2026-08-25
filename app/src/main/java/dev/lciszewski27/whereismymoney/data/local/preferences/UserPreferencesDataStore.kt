@@ -27,6 +27,9 @@ class UserPreferencesDataStore(private val context: Context) {
         val PRIMARY_CURRENCY = stringPreferencesKey("primary_currency")
         val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamic_color_enabled")
         val DARK_THEME_ENABLED = stringPreferencesKey("dark_theme_enabled") // "auto" | "light" | "dark"
+        val AMOLED_MODE_ENABLED = booleanPreferencesKey("amoled_mode_enabled")
+        val ANIMATIONS_ENABLED = booleanPreferencesKey("animations_enabled")
+        val COLOR_PRESET = stringPreferencesKey("color_preset")
     }
 
     val primaryCurrency: Flow<String> = context.dataStore.data.map { prefs ->
@@ -39,6 +42,18 @@ class UserPreferencesDataStore(private val context: Context) {
 
     val darkThemeEnabled: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[Keys.DARK_THEME_ENABLED] ?: "auto"
+    }
+
+    val amoledModeEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.AMOLED_MODE_ENABLED] ?: false
+    }
+
+    val animationsEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.ANIMATIONS_ENABLED] ?: true
+    }
+
+    val colorPreset: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[Keys.COLOR_PRESET] ?: "DEFAULT"
     }
 
     suspend fun setPrimaryCurrency(code: String) {
@@ -56,6 +71,24 @@ class UserPreferencesDataStore(private val context: Context) {
     suspend fun setDarkThemeEnabled(mode: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.DARK_THEME_ENABLED] = mode // "auto", "light", "dark"
+        }
+    }
+
+    suspend fun setAmoledModeEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.AMOLED_MODE_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setAnimationsEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.ANIMATIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setColorPreset(preset: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.COLOR_PRESET] = preset
         }
     }
 }

@@ -9,11 +9,15 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import dev.lciszewski27.whereismymoney.ui.settings.ColorPreset
 
 /**
  * Light color scheme with all surface container levels for full MD3 Expressive support.
@@ -89,19 +93,68 @@ private val DarkColorScheme = darkColorScheme(
     outlineVariant = DarkOutlineVariant
 )
 
+val LocalAnimationsEnabled = staticCompositionLocalOf { true }
+
+private val MoneyGreenColorScheme = darkColorScheme(
+    primary = Color(0xFF2E7D32),
+    secondary = Color(0xFF4CAF50),
+    tertiary = Color(0xFF81C784)
+)
+
+private val OceanBlueColorScheme = darkColorScheme(
+    primary = Color(0xFF1565C0),
+    secondary = Color(0xFF2196F3),
+    tertiary = Color(0xFF64B5F6)
+)
+
+private val RoyalPurpleColorScheme = darkColorScheme(
+    primary = Color(0xFF6A1B9A),
+    secondary = Color(0xFF9C27B0),
+    tertiary = Color(0xFFBA68C8)
+)
+
+private val CharcoalColorScheme = darkColorScheme(
+    primary = Color(0xFF37474F),
+    secondary = Color(0xFF546E7A),
+    tertiary = Color(0xFF78909C)
+)
+
 @Composable
 fun WhereIsMyMoneyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
+    amoledMode: Boolean = false,
+    animationsEnabled: Boolean = true,
+    colorPreset: ColorPreset = ColorPreset.DEFAULT,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
+    var colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkColorScheme
+        darkTheme -> {
+            when (colorPreset) {
+                ColorPreset.MONEY_GREEN -> MoneyGreenColorScheme
+                ColorPreset.OCEAN_BLUE -> OceanBlueColorScheme
+                ColorPreset.ROYAL_PURPLE -> RoyalPurpleColorScheme
+                ColorPreset.CHARCOAL -> CharcoalColorScheme
+                else -> DarkColorScheme
+            }
+        }
         else -> LightColorScheme
+    }
+
+    if (darkTheme && amoledMode) {
+        colorScheme = colorScheme.copy(
+            background = Color.Black,
+            surface = Color.Black,
+            surfaceContainer = Color.Black,
+            surfaceContainerLow = Color.Black,
+            surfaceContainerLowest = Color.Black,
+            surfaceContainerHigh = Color(0xFF121212),
+            surfaceContainerHighest = Color(0xFF1E1E1E)
+        )
     }
 
     // Status bar tinting — use surface for edge-to-edge
@@ -120,6 +173,10 @@ fun WhereIsMyMoneyTheme(
         colorScheme = colorScheme,
         typography = Typography,
         shapes = MoneyShapes,
-        content = content
+        content = {
+            CompositionLocalProvider(LocalAnimationsEnabled provides animationsEnabled) {
+                content()
+            }
+        }
     )
 }

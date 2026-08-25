@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import dev.lciszewski27.whereismymoney.ui.navigation.AppNavHost
+import dev.lciszewski27.whereismymoney.ui.settings.ColorPreset
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,6 +23,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val dynamicColorEnabled by app.preferences.dynamicColorEnabled.collectAsState(initial = true)
             val darkThemeMode by app.preferences.darkThemeEnabled.collectAsState(initial = "auto")
+            val amoledMode by app.preferences.amoledModeEnabled.collectAsState(initial = false)
+            val animationsEnabled by app.preferences.animationsEnabled.collectAsState(initial = true)
+            val colorPresetStr by app.preferences.colorPreset.collectAsState(initial = "DEFAULT")
+            val colorPreset = try { ColorPreset.valueOf(colorPresetStr) } catch (e: Exception) { ColorPreset.DEFAULT }
 
             val isDarkTheme = when (darkThemeMode) {
                 "light" -> false
@@ -31,7 +36,10 @@ class MainActivity : ComponentActivity() {
 
             WhereIsMyMoneyTheme(
                 darkTheme = isDarkTheme,
-                dynamicColor = dynamicColorEnabled
+                dynamicColor = dynamicColorEnabled,
+                amoledMode = amoledMode,
+                animationsEnabled = animationsEnabled,
+                colorPreset = colorPreset
             ) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavHost()

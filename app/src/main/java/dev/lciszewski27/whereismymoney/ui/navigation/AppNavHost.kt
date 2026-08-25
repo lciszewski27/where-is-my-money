@@ -39,7 +39,6 @@ import dev.lciszewski27.whereismymoney.ui.person.PersonDetailViewModel
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsScreen
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsUiEvent
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsViewModel
-import dev.lciszewski27.whereismymoney.ui.contributors.ContributorsScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -284,18 +283,9 @@ fun AppNavHost(
                         SettingsUiEvent.ImportBackup -> {
                             importLauncher.launch(arrayOf("application/json"))
                         }
-                        SettingsUiEvent.OpenContributors -> {
-                            navController.navigate(Route.Contributors)
-                        }
                         else -> settingsViewModel.onEvent(event)
                     }
                 }
-            )
-        }
-
-        composable<Route.Contributors> {
-            ContributorsScreen(
-                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
