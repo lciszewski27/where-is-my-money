@@ -44,11 +44,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Preview
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
+import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtItemWithPerson
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
+import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -263,3 +266,125 @@ private fun ActivityRow(item: DebtItemWithPerson, onClick: () -> Unit) {
 }
 
 private fun formatDate(epoch: Long): String = SimpleDateFormat("MMM dd", Locale.getDefault()).format(Date(epoch))
+
+@Preview(showBackground = true)
+@Composable
+private fun ExpandableBottomDrawerCollapsedPreview() {
+    val summary = DashboardSummary(
+        totalReceivablesCents = 15000L,
+        totalPayablesCents = 5000L,
+        netBalanceCents = 10000L,
+        primaryCurrency = "USD",
+        totalActiveDebts = 3,
+        activeCurrencies = setOf("USD", "EUR")
+    )
+    val upcoming = listOf(
+        DebtItemWithPerson(
+            debt = Debt(
+                id = "1", personId = "p1", amountCents = 2500, currency = "USD",
+                type = DebtType.THEY_OWE_ME, description = "Lunch",
+                timestamp = System.currentTimeMillis(),
+                dueDateMillis = System.currentTimeMillis() + 86400000,
+                isSettled = false
+            ),
+            personName = "Alice",
+            personColorSeed = 123L
+        ),
+        DebtItemWithPerson(
+            debt = Debt(
+                id = "2", personId = "p2", amountCents = 1000, currency = "USD",
+                type = DebtType.I_OWE_THEM, description = "Coffee",
+                timestamp = System.currentTimeMillis(),
+                dueDateMillis = System.currentTimeMillis() - 86400000,
+                isSettled = false
+            ),
+            personName = "Bob",
+            personColorSeed = 456L
+        )
+    )
+    val recent = listOf(
+        DebtItemWithPerson(
+            debt = Debt(
+                id = "3", personId = "p3", amountCents = 5000, currency = "USD",
+                type = DebtType.THEY_OWE_ME, description = "Rent share",
+                timestamp = System.currentTimeMillis() - 172800000,
+                dueDateMillis = null,
+                isSettled = true
+            ),
+            personName = "Charlie",
+            personColorSeed = 789L
+        )
+    )
+
+    WhereIsMyMoneyTheme {
+        ExpandableBottomDrawer(
+            summary = summary,
+            upcomingRepayments = upcoming,
+            recentActivity = recent,
+            isExpanded = false,
+            onExpandedChange = {},
+            onPersonClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun ExpandableBottomDrawerExpandedPreview() {
+    val summary = DashboardSummary(
+        totalReceivablesCents = 15000L,
+        totalPayablesCents = 5000L,
+        netBalanceCents = 10000L,
+        primaryCurrency = "USD",
+        totalActiveDebts = 3,
+        activeCurrencies = setOf("USD", "EUR")
+    )
+    val upcoming = listOf(
+        DebtItemWithPerson(
+            debt = Debt(
+                id = "1", personId = "p1", amountCents = 2500, currency = "USD",
+                type = DebtType.THEY_OWE_ME, description = "Lunch",
+                timestamp = System.currentTimeMillis(),
+                dueDateMillis = System.currentTimeMillis() + 86400000,
+                isSettled = false
+            ),
+            personName = "Alice",
+            personColorSeed = 123L
+        ),
+        DebtItemWithPerson(
+            debt = Debt(
+                id = "2", personId = "p2", amountCents = 1000, currency = "USD",
+                type = DebtType.I_OWE_THEM, description = "Coffee",
+                timestamp = System.currentTimeMillis(),
+                dueDateMillis = System.currentTimeMillis() - 86400000,
+                isSettled = false
+            ),
+            personName = "Bob",
+            personColorSeed = 456L
+        )
+    )
+    val recent = listOf(
+        DebtItemWithPerson(
+            debt = Debt(
+                id = "3", personId = "p3", amountCents = 5000, currency = "USD",
+                type = DebtType.THEY_OWE_ME, description = "Rent share",
+                timestamp = System.currentTimeMillis() - 172800000,
+                dueDateMillis = null,
+                isSettled = true
+            ),
+            personName = "Charlie",
+            personColorSeed = 789L
+        )
+    )
+
+    WhereIsMyMoneyTheme {
+        ExpandableBottomDrawer(
+            summary = summary,
+            upcomingRepayments = upcoming,
+            recentActivity = recent,
+            isExpanded = true,
+            onExpandedChange = {},
+            onPersonClick = {}
+        )
+    }
+}
