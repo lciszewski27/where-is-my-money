@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,9 +38,11 @@ import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.PersonOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -50,14 +53,13 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
@@ -72,6 +74,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -196,7 +201,11 @@ fun DashboardScreen(
         val currencySymbol = CurrencyInfo.fromCode(uiState.summary.primaryCurrency).symbol
 
         // ── Box overlay: content + floating drawer ─────────────────
-        Box(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+        ) {
             // Content layer
             Column(modifier = Modifier.fillMaxSize()) {
                 // Filter Chips — always visible
@@ -210,7 +219,9 @@ fun DashboardScreen(
 
                 if (uiState.persons.isEmpty()) {
                     Box(
-                        modifier = Modifier.fillMaxSize().weight(1f),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
                         contentAlignment = Alignment.Center
                     ) {
                         EmptyState(
@@ -220,7 +231,9 @@ fun DashboardScreen(
                     }
                 } else {
                     LazyColumn(
-                        modifier = Modifier.fillMaxSize().weight(1f),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .weight(1f),
                         userScrollEnabled = !isDrawerExpanded,
                         contentPadding = PaddingValues(
                             start = MoneySpacing.md, end = MoneySpacing.md,
@@ -230,7 +243,9 @@ fun DashboardScreen(
                     ) {
                         item {
                             Row(
-                                modifier = Modifier.fillMaxWidth().padding(horizontal = MoneySpacing.xxs),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = MoneySpacing.xxs),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
@@ -253,7 +268,14 @@ fun DashboardScreen(
                                     person = person,
                                     currencySymbol = currencySymbol,
                                     onClick = { onEvent(DashboardUiEvent.OpenPerson(person.id)) }
-                                ) { type -> onEvent(DashboardUiEvent.QuickAddDebt(person.id, type)) }
+                                ) { type ->
+                                    onEvent(
+                                        DashboardUiEvent.QuickAddDebt(
+                                            person.id,
+                                            type
+                                        )
+                                    )
+                                }
                             }
                         }
                     }
@@ -327,12 +349,18 @@ private fun DashboardTopAppBar(
                                     },
                                     enabled = !isDrawerExpanded
                                 ) {
-                                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                                    Icon(
+                                        Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back"
+                                    )
                                 }
                             },
                             trailingIcon = {
                                 if (searchQuery.isNotEmpty()) {
-                                    IconButton(onClick = onClearSearch, enabled = !isDrawerExpanded) {
+                                    IconButton(
+                                        onClick = onClearSearch,
+                                        enabled = !isDrawerExpanded
+                                    ) {
                                         Icon(Icons.Default.Clear, contentDescription = "Clear")
                                     }
                                 }
@@ -389,40 +417,73 @@ private fun DashboardTopAppBar(
 
 // ── Filter Chips ─────────────────────────────────────────────────────
 @Composable
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 private fun DebtFilterChips(
     selected: DebtFilterType,
     onSelect: (DebtFilterType) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    SingleChoiceSegmentedButtonRow(modifier = modifier.fillMaxWidth()) {
-        SegmentedButton(
-            selected = selected == DebtFilterType.ALL,
-            onClick = { onSelect(DebtFilterType.ALL) },
-            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3),
-            label = { Text("All") }
-        )
-        SegmentedButton(
-            selected = selected == DebtFilterType.THEY_OWE_ME,
-            onClick = { onSelect(DebtFilterType.THEY_OWE_ME) },
-            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3),
-            icon = {
-                SegmentedButtonDefaults.Icon(selected == DebtFilterType.THEY_OWE_ME) {
-                    Icon(Icons.Outlined.ArrowDownward, null, Modifier.size(18.dp))
+    FlowRow(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(2.dp)
+    ) {
+        // 1. ALL
+        ToggleButton(
+            modifier = Modifier
+                .semantics {
+                    role = Role.RadioButton
                 }
+                .weight(1f),
+            checked = selected == DebtFilterType.ALL,
+            onCheckedChange = { checked ->
+                if (checked) onSelect(DebtFilterType.ALL)
             },
-            label = { Text("They Owe") }
-        )
-        SegmentedButton(
-            selected = selected == DebtFilterType.I_OWE_THEM,
-            onClick = { onSelect(DebtFilterType.I_OWE_THEM) },
-            shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3),
-            icon = {
-                SegmentedButtonDefaults.Icon(selected == DebtFilterType.I_OWE_THEM) {
-                    Icon(Icons.Outlined.ArrowUpward, null, Modifier.size(18.dp))
+            shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+        ) {
+            Text(
+                text = "All"
+            )
+        }
+
+        // 2. THEY_OWE_ME
+        ToggleButton(
+            modifier = Modifier
+                .semantics {
+                    role = Role.RadioButton
                 }
+                .weight(1f),
+            checked = selected == DebtFilterType.THEY_OWE_ME,
+            onCheckedChange = { checked ->
+                if (checked) onSelect(DebtFilterType.THEY_OWE_ME)
+            }
+        ) {
+            Icon(Icons.Outlined.ArrowDownward, null, Modifier.size(18.dp))
+            Spacer(modifier = Modifier.size(ToggleButtonDefaults.IconSpacing))
+            Text(
+                text = "They Owe"
+            )
+        }
+
+        // 3. I_OWE_THEM
+        ToggleButton(
+            modifier = Modifier
+                .semantics {
+                    role = Role.RadioButton
+                }
+                .weight(1f),
+            checked = selected == DebtFilterType.I_OWE_THEM,
+            onCheckedChange = { checked ->
+                if (checked) onSelect(DebtFilterType.I_OWE_THEM)
             },
-            label = { Text("I Owe") }
-        )
+        ) {
+            Icon(Icons.Outlined.ArrowUpward, null, Modifier.size(18.dp))
+            Spacer(modifier = Modifier.size(ToggleButtonDefaults.IconSpacing))
+            Text(
+                text = "I Owe"
+            )
+        }
     }
 }
 
@@ -454,8 +515,10 @@ private fun SwipeablePersonCard(
             val color = when (direction) {
                 SwipeToDismissBoxValue.StartToEnd ->
                     MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.8f)
+
                 SwipeToDismissBoxValue.EndToStart ->
                     MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
+
                 else -> MaterialTheme.colorScheme.surface
             }
             val alignment = when (direction) {
@@ -487,11 +550,15 @@ private fun SwipeablePersonCard(
                         if (direction == SwipeToDismissBoxValue.StartToEnd) {
                             Icon(icon, null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
                             Spacer(Modifier.width(MoneySpacing.xs))
-                            Text(label, color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                fontWeight = FontWeight.Bold)
+                            Text(
+                                label, color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                fontWeight = FontWeight.Bold
+                            )
                         } else {
-                            Text(label, color = MaterialTheme.colorScheme.onErrorContainer,
-                                fontWeight = FontWeight.Bold)
+                            Text(
+                                label, color = MaterialTheme.colorScheme.onErrorContainer,
+                                fontWeight = FontWeight.Bold
+                            )
                             Spacer(Modifier.width(MoneySpacing.xs))
                             Icon(icon, null, tint = MaterialTheme.colorScheme.onErrorContainer)
                         }
@@ -561,15 +628,21 @@ private fun PersonCard(
             Column(horizontalAlignment = Alignment.End) {
                 Text(
                     text = if (person.balanceCents == 0L) "Settled"
-                           else if (isPositive) "Owes you"
-                           else "You owe",
+                    else if (isPositive) "Owes you"
+                    else "You owe",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
                 Text(
-                    text = if (person.balanceCents < 0) "-${abs(person.balanceCents) / 100}.${(abs(person.balanceCents) % 100).toString().padStart(2, '0')}$currencySymbol"
-                           else "${abs(person.balanceCents) / 100}.${(abs(person.balanceCents) % 100).toString().padStart(2, '0')}$currencySymbol",
+                    text = if (person.balanceCents < 0) "-${abs(person.balanceCents) / 100}.${
+                        (abs(
+                            person.balanceCents
+                        ) % 100).toString().padStart(2, '0')
+                    }$currencySymbol"
+                    else "${abs(person.balanceCents) / 100}.${
+                        (abs(person.balanceCents) % 100).toString().padStart(2, '0')
+                    }$currencySymbol",
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Black,
                     color = balanceColor
@@ -624,7 +697,7 @@ private fun EmptyState(
         Spacer(Modifier.height(MoneySpacing.sm))
         Text(
             text = if (isFiltered) "Try adjusting your search or filters to find what you're looking for."
-                   else "Tap the + button to add your first person and start tracking debts.",
+            else "Tap the + button to add your first person and start tracking debts.",
             style = MaterialTheme.typography.bodyLarge,
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
