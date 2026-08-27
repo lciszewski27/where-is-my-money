@@ -26,7 +26,9 @@ class MainActivity : ComponentActivity() {
             val amoledMode by app.preferences.amoledModeEnabled.collectAsState(initial = false)
             val animationsEnabled by app.preferences.animationsEnabled.collectAsState(initial = true)
             val colorPresetStr by app.preferences.colorPreset.collectAsState(initial = "DEFAULT")
+            val appFontStr by app.preferences.appFont.collectAsState(initial = "quicksand")
             val colorPreset = try { ColorPreset.valueOf(colorPresetStr) } catch (e: Exception) { ColorPreset.DEFAULT }
+            val useSystemFont = appFontStr == "system"
 
             val isDarkTheme = when (darkThemeMode) {
                 "light" -> false
@@ -39,7 +41,8 @@ class MainActivity : ComponentActivity() {
                 dynamicColor = dynamicColorEnabled,
                 amoledMode = amoledMode,
                 animationsEnabled = animationsEnabled,
-                colorPreset = colorPreset
+                colorPreset = colorPreset,
+                useSystemFont = useSystemFont
             ) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     AppNavHost()

@@ -1,6 +1,9 @@
 package dev.lciszewski27.whereismymoney.ui.dashboard
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -88,6 +91,7 @@ import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.ui.components.ExpandableBottomDrawer
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
+import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 import java.text.SimpleDateFormat
@@ -102,8 +106,9 @@ fun DashboardScreen(
     onEvent: (DashboardUiEvent) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val animationsEnabled = LocalAnimationsEnabled.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
+        snapAnimationSpec = if (animationsEnabled) spring(dampingRatio = 0.7f, stiffness = 300f) else snap()
     )
     var showNewPersonDialog by remember { mutableStateOf(false) }
     var isDrawerExpanded by remember { mutableStateOf(false) }
@@ -181,8 +186,8 @@ fun DashboardScreen(
         floatingActionButton = {
             AnimatedVisibility(
                 visible = !isDrawerExpanded,
-                enter = fadeIn(),
-                exit = fadeOut()
+                enter = if (animationsEnabled) fadeIn() else EnterTransition.None,
+                exit = if (animationsEnabled) fadeOut() else ExitTransition.None
             ) {
                 FloatingActionButton(
                     onClick = { showNewPersonDialog = true },
@@ -261,8 +266,10 @@ fun DashboardScreen(
                         items(uiState.persons, key = { it.id }) { person ->
                             AnimatedVisibility(
                                 visible = true,
-                                enter = fadeIn(animationSpec = tween(400)) +
-                                        slideInVertically(animationSpec = tween(400)) { it / 2 }
+                                enter = if (animationsEnabled) {
+                                    fadeIn(animationSpec = tween(400)) +
+                                            slideInVertically(animationSpec = tween(400)) { it / 2 }
+                                } else EnterTransition.None
                             ) {
                                 SwipeablePersonCard(
                                     person = person,
@@ -285,8 +292,8 @@ fun DashboardScreen(
             // Scrim overlay
             AnimatedVisibility(
                 visible = isDrawerExpanded,
-                enter = fadeIn(),
-                exit = fadeOut(),
+                enter = if (animationsEnabled) fadeIn() else EnterTransition.None,
+                exit = if (animationsEnabled) fadeOut() else ExitTransition.None,
                 modifier = Modifier.fillMaxSize()
             ) {
                 Box(
@@ -457,7 +464,8 @@ private fun DebtFilterChips(
             checked = selected == DebtFilterType.THEY_OWE_ME,
             onCheckedChange = { checked ->
                 if (checked) onSelect(DebtFilterType.THEY_OWE_ME)
-            }
+            },
+            shapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
         ) {
             Icon(Icons.Outlined.ArrowDownward, null, Modifier.size(18.dp))
             Spacer(modifier = Modifier.size(ToggleButtonDefaults.IconSpacing))
@@ -477,6 +485,7 @@ private fun DebtFilterChips(
             onCheckedChange = { checked ->
                 if (checked) onSelect(DebtFilterType.I_OWE_THEM)
             },
+            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
         ) {
             Icon(Icons.Outlined.ArrowUpward, null, Modifier.size(18.dp))
             Spacer(modifier = Modifier.size(ToggleButtonDefaults.IconSpacing))

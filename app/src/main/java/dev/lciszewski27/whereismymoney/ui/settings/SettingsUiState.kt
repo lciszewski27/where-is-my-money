@@ -12,8 +12,17 @@ data class SettingsUiState(
     val amoledModeEnabled: Boolean = false,
     val animationsEnabled: Boolean = true,
     val colorPreset: ColorPreset = ColorPreset.DEFAULT,
-    val exchangeRates: List<ExchangeRate> = emptyList()
+    val appFont: AppFont = AppFont.QUICKSAND,
+    val exchangeRates: List<ExchangeRate> = emptyList(),
+    val isDropdownExpanded: Boolean = false,
+    val isThemeDropdownExpanded: Boolean = false,
+    val isFontDropdownExpanded: Boolean = false
 )
+
+enum class AppFont(val displayName: String, val value: String) {
+    QUICKSAND("Quicksand", "quicksand"),
+    SYSTEM("System", "system")
+}
 
 enum class ThemeMode(val displayName: String, val value: String) {
     AUTO("System", "auto"),
@@ -41,4 +50,13 @@ sealed interface SettingsUiEvent {
     data object ExportBackup : SettingsUiEvent
     data object ImportBackup : SettingsUiEvent
     data object NavigateBack : SettingsUiEvent
+    data object DismissDropdown : SettingsUiEvent
+    data object ToggleDropdown : SettingsUiEvent
+
+    data object ToggleThemeDropdown : SettingsUiEvent
+    data object DismissThemeDropdown : SettingsUiEvent
+
+    data class SetAppFont(val font: AppFont) : SettingsUiEvent
+    data object ToggleFontDropdown : SettingsUiEvent
+    data object DismissFontDropdown : SettingsUiEvent
 }

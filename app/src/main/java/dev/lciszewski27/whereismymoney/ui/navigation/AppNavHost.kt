@@ -3,6 +3,9 @@ package dev.lciszewski27.whereismymoney.ui.navigation
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -39,6 +42,7 @@ import dev.lciszewski27.whereismymoney.ui.person.PersonDetailViewModel
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsScreen
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsUiEvent
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsViewModel
+import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -52,6 +56,7 @@ fun AppNavHost(
     val context = LocalContext.current
     val app = context.applicationContext as WhereIsMyMoneyApp
     val scope = rememberCoroutineScope()
+    val animationsEnabled = LocalAnimationsEnabled.current
 
     // ── Shared Dashboard ViewModel ───────────────────────────────────
     val dashboardViewModel: DashboardViewModel = viewModel(
@@ -168,24 +173,32 @@ fun AppNavHost(
         startDestination = Route.Dashboard,
         modifier = modifier.fillMaxSize(),
         enterTransition = {
-            slideInHorizontally(
-                animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
-            ) { it } + fadeIn(animationSpec = spring())
+            if (animationsEnabled) {
+                slideInHorizontally(
+                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
+                ) { it } + fadeIn(animationSpec = spring())
+            } else EnterTransition.None
         },
         exitTransition = {
-            slideOutHorizontally(
-                animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
-            ) { -it / 3 } + fadeOut(animationSpec = spring())
+            if (animationsEnabled) {
+                slideOutHorizontally(
+                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
+                ) { -it / 3 } + fadeOut(animationSpec = spring())
+            } else ExitTransition.None
         },
         popEnterTransition = {
-            slideInHorizontally(
-                animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
-            ) { -it / 3 } + fadeIn(animationSpec = spring())
+            if (animationsEnabled) {
+                slideInHorizontally(
+                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
+                ) { -it / 3 } + fadeIn(animationSpec = spring())
+            } else EnterTransition.None
         },
         popExitTransition = {
-            slideOutHorizontally(
-                animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
-            ) { it } + fadeOut(animationSpec = spring())
+            if (animationsEnabled) {
+                slideOutHorizontally(
+                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f)
+                ) { it } + fadeOut(animationSpec = spring())
+            } else ExitTransition.None
         }
     ) {
         composable<Route.Dashboard> {

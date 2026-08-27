@@ -81,6 +81,8 @@ dependencies {
     // Coil (image loading for contributor avatars)
     implementation(libs.coil.compose)
 
+    implementation(libs.compose.icons)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))

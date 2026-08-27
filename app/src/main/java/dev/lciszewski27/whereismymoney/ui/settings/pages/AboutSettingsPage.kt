@@ -2,25 +2,33 @@ package dev.lciszewski27.whereismymoney.ui.settings.pages
 
 import android.content.res.Resources
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
@@ -36,22 +44,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil.compose.AsyncImage
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import compose.icons.SimpleIcons
+import compose.icons.simpleicons.Github
 import dev.lciszewski27.whereismymoney.BuildConfig
 import dev.lciszewski27.whereismymoney.domain.model.Contributor
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsUiEvent
+import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 import kotlinx.serialization.json.Json
@@ -82,52 +94,108 @@ private fun AboutSettingsPageContent(
     contributors: List<Contributor>,
     onContributorClick: (Contributor) -> Unit
 ) {
+    val animationsEnabled = LocalAnimationsEnabled.current
     val versionName = BuildConfig.VERSION_NAME
 
     val context = LocalContext.current
 
+    val uriHandler = LocalUriHandler.current
+
+    val isPreview = LocalInspectionMode.current
     val appIconDrawable = remember(context) {
-        context.packageManager.getApplicationIcon(context.packageName)
+        if (!isPreview) {
+            runCatching {
+                context.packageManager.getApplicationIcon(context.packageName)
+            }.getOrNull()
+        } else {
+            null
+        }
     }
+
+    data class LinkItem(val name: String, val link: String, val icon: ImageVector)
+
+    val Buttons = listOf(
+        LinkItem(
+            name = "Github",
+            link = "https://github.com/lciszewski27/where-is-my-money",
+            icon = SimpleIcons.Github
+        ),
+    )
 
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = MoneySpacing.md),
-        verticalArrangement = Arrangement.spacedBy(MoneySpacing.md)
+        verticalArrangement = Arrangement.spacedBy(MoneySpacing.xxl)
     ) {
-        // ── App Info ────────────────────────────────────────
-        Column(
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = MoneySpacing.xxl),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .clip(RoundedCornerShape(MoneySpacing.md))
+                .background(color = MaterialTheme.colorScheme.surfaceContainer)
+
         ) {
-            Box(
+            // ── App Info ────────────────────────────────────────
+            Column(
                 modifier = Modifier
-                    .size(128.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(vertical = MoneySpacing.xxl),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(MoneySpacing.xs)
             ) {
+                Box(
+                    modifier = Modifier
+                        .size(128.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Alignment
                     Icon(
-                        painter = rememberAsyncImagePainter(model = appIconDrawable),
-                        contentDescription = "Ikona aplikacji",
+                        painter = if (appIconDrawable != null) {
+                            rememberAsyncImagePainter(model = appIconDrawable)
+                        } else {
+                            painterResource(id = dev.lciszewski27.whereismymoney.R.drawable.ic_launcher_foreground)
+                        },
+                        contentDescription = "App icon",
                         tint = Color.Unspecified,
                         modifier = Modifier.size(100.dp)
                     )
+                }
+                Text(
+                    text = "Where is my money?",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Black,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Version $versionName",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.padding(
+                        horizontal = MoneySpacing.md,
+                        vertical = MoneySpacing.md
+                    )
+                )
+                FlowRow(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(
+                        8.dp,
+                        Alignment.CenterHorizontally
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Buttons.forEach { button ->
+                        LinkButton(name = button.name, onClick = {
+                            if (button.link.isNotBlank()) {
+                                uriHandler.openUri(button.link)
+                            }
+                        }, icon = button.icon)
+                    }
+                }
             }
-            Text(
-                text = "Where is my money?",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Black,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Text(
-                text = "Version $versionName",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         }
 
         if (contributors.isEmpty()) {
@@ -189,14 +257,16 @@ private fun AboutSettingsPageContent(
 
                     AnimatedVisibility(
                         visible = visible,
-                        enter = fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
-                                slideInVertically(
-                                    initialOffsetY = { it / 2 },
-                                    animationSpec = spring(
-                                        dampingRatio = Spring.DampingRatioLowBouncy,
-                                        stiffness = Spring.StiffnessLow
+                        enter = if (animationsEnabled) {
+                            fadeIn(animationSpec = spring(stiffness = Spring.StiffnessLow)) +
+                                    slideInVertically(
+                                        initialOffsetY = { it / 2 },
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioLowBouncy,
+                                            stiffness = Spring.StiffnessLow
+                                        )
                                     )
-                                )
+                        } else EnterTransition.None
                     ) {
                         ContributorCard(
                             contributor = contributor,
@@ -334,6 +404,50 @@ private fun ContributorAvatar(
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
                 fontSize = (size.value * 0.45).sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun LinkButton(
+    name: String,
+    icon: ImageVector,
+    onClick: () -> Unit
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(8.dp))
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.outline,
+                shape = RoundedCornerShape(8.dp)
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = androidx.compose.material3.ripple()
+            ) {
+                onClick()
+            }
+            .padding(horizontal = 6.dp, vertical = 4.dp) // Zwiększyłem lekko padding dla wygody
+    ) {
+        // Zmieniono Box na Row, aby elementy układały się obok siebie
+        Row(
+            verticalAlignment = Alignment.CenterVertically, // Wyśrodkowanie w pionie
+            horizontalArrangement = Arrangement.spacedBy(8.dp) // Odstęp między ikoną a tekstem
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null, // Jeśli ikona jest tylko dekoracją
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
     }

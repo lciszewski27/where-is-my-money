@@ -30,6 +30,7 @@ class UserPreferencesDataStore(private val context: Context) {
         val AMOLED_MODE_ENABLED = booleanPreferencesKey("amoled_mode_enabled")
         val ANIMATIONS_ENABLED = booleanPreferencesKey("animations_enabled")
         val COLOR_PRESET = stringPreferencesKey("color_preset")
+        val APP_FONT = stringPreferencesKey("app_font") // "quicksand" | "system"
     }
 
     val primaryCurrency: Flow<String> = context.dataStore.data.map { prefs ->
@@ -54,6 +55,10 @@ class UserPreferencesDataStore(private val context: Context) {
 
     val colorPreset: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[Keys.COLOR_PRESET] ?: "DEFAULT"
+    }
+
+    val appFont: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[Keys.APP_FONT] ?: "quicksand"
     }
 
     suspend fun setPrimaryCurrency(code: String) {
@@ -89,6 +94,12 @@ class UserPreferencesDataStore(private val context: Context) {
     suspend fun setColorPreset(preset: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.COLOR_PRESET] = preset
+        }
+    }
+
+    suspend fun setAppFont(font: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.APP_FONT] = font
         }
     }
 }

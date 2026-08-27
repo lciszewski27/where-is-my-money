@@ -31,8 +31,18 @@ class SettingsViewModel(
             val amoled = preferences.amoledModeEnabled.first()
             val animations = preferences.animationsEnabled.first()
             val presetStr = preferences.colorPreset.first()
-            val preset = try { ColorPreset.valueOf(presetStr) } catch (e: Exception) { ColorPreset.DEFAULT }
-            
+            val preset = try {
+                ColorPreset.valueOf(presetStr)
+            } catch (e: Exception) {
+                ColorPreset.DEFAULT
+            }
+            val fontStr = preferences.appFont.first()
+            val font = try {
+                AppFont.entries.find { it.value == fontStr } ?: AppFont.QUICKSAND
+            } catch (e: Exception) {
+                AppFont.QUICKSAND
+            }
+
             val mode = when (theme) {
                 "light" -> ThemeMode.LIGHT
                 "dark" -> ThemeMode.DARK
@@ -47,6 +57,7 @@ class SettingsViewModel(
                     amoledModeEnabled = amoled,
                     animationsEnabled = animations,
                     colorPreset = preset,
+                    appFont = font,
                     exchangeRates = currencyConversion.getAllRates()
                 )
             }
@@ -61,47 +72,85 @@ class SettingsViewModel(
                     _uiState.update { it.copy(primaryCurrency = event.currency) }
                 }
             }
+
             is SettingsUiEvent.ToggleDynamicColor -> {
                 viewModelScope.launch {
                     preferences.setDynamicColorEnabled(event.enabled)
                     _uiState.update { it.copy(dynamicColorEnabled = event.enabled) }
                 }
             }
+
             is SettingsUiEvent.SetThemeMode -> {
                 viewModelScope.launch {
                     preferences.setDarkThemeEnabled(event.mode.value)
                     _uiState.update { it.copy(darkThemeMode = event.mode) }
                 }
             }
+
             is SettingsUiEvent.ToggleAmoledMode -> {
                 viewModelScope.launch {
                     preferences.setAmoledModeEnabled(event.enabled)
                     _uiState.update { it.copy(amoledModeEnabled = event.enabled) }
                 }
             }
+
             is SettingsUiEvent.ToggleAnimations -> {
                 viewModelScope.launch {
                     preferences.setAnimationsEnabled(event.enabled)
                     _uiState.update { it.copy(animationsEnabled = event.enabled) }
                 }
             }
+
             is SettingsUiEvent.SetColorPreset -> {
                 viewModelScope.launch {
                     preferences.setColorPreset(event.preset.name)
                     _uiState.update { it.copy(colorPreset = event.preset) }
                 }
             }
+
             is SettingsUiEvent.AddExchangeRate -> {
                 currencyConversion.setRate(event.from, event.to, event.rate)
                 _uiState.update { it.copy(exchangeRates = currencyConversion.getAllRates()) }
             }
+
             is SettingsUiEvent.RemoveExchangeRate -> {
                 currencyConversion.removeRate(event.from, event.to)
                 _uiState.update { it.copy(exchangeRates = currencyConversion.getAllRates()) }
             }
+
             is SettingsUiEvent.ExportBackup -> {}
             is SettingsUiEvent.ImportBackup -> {}
             is SettingsUiEvent.NavigateBack -> {}
+            is SettingsUiEvent.DismissDropdown -> {
+                _uiState.update { it.copy(isDropdownExpanded = false) }
+            }
+
+            is SettingsUiEvent.ToggleDropdown -> {
+                _uiState.update { it.copy(isDropdownExpanded = !it.isDropdownExpanded) }
+            }
+
+            is SettingsUiEvent.DismissThemeDropdown -> {
+                _uiState.update { it.copy(isThemeDropdownExpanded = false) }
+            }
+
+            is SettingsUiEvent.ToggleThemeDropdown -> {
+                _uiState.update { it.copy(isThemeDropdownExpanded = !it.isThemeDropdownExpanded) }
+            }
+
+            is SettingsUiEvent.SetAppFont -> {
+                viewModelScope.launch {
+                    preferences.setAppFont(event.font.value)
+                    _uiState.update { it.copy(appFont = event.font) }
+                }
+            }
+
+            is SettingsUiEvent.ToggleFontDropdown -> {
+                _uiState.update { it.copy(isFontDropdownExpanded = !it.isFontDropdownExpanded) }
+            }
+
+            is SettingsUiEvent.DismissFontDropdown -> {
+                _uiState.update { it.copy(isFontDropdownExpanded = false) }
+            }
         }
     }
 }

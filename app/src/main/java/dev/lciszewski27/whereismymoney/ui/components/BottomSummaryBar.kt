@@ -1,6 +1,8 @@
 package dev.lciszewski27.whereismymoney.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -24,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
+import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 
 /**
@@ -41,6 +44,7 @@ fun BottomSummaryBar(
     modifier: Modifier = Modifier
 ) {
     val currencySymbol = CurrencyInfo.fromCode(summary.primaryCurrency).symbol
+    val animationsEnabled = LocalAnimationsEnabled.current
 
     Surface(
         modifier = modifier.fillMaxWidth(),
@@ -104,8 +108,8 @@ fun BottomSummaryBar(
             // Active debts count — spring animated
             AnimatedVisibility(
                 visible = summary.totalActiveDebts > 0,
-                enter = fadeIn(spring()) + expandVertically(spring()),
-                exit = fadeOut(spring()) + shrinkVertically(spring())
+                enter = if (animationsEnabled) fadeIn(spring()) + expandVertically(spring()) else EnterTransition.None,
+                exit = if (animationsEnabled) fadeOut(spring()) + shrinkVertically(spring()) else ExitTransition.None
             ) {
                 Text(
                     text = "${summary.totalActiveDebts} active debt${if (summary.totalActiveDebts != 1) "s" else ""}" +

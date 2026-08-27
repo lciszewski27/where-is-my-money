@@ -2,6 +2,9 @@ package dev.lciszewski27.whereismymoney.ui.components
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -14,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 
 /**
  * Animated counter that slides numbers up/down when the amount changes.
@@ -28,22 +32,27 @@ fun AnimatedAmountText(
     fontWeight: FontWeight = FontWeight.Bold
 ) {
     val displayText = formatCents(amountCents, currencySymbol)
+    val animationsEnabled = LocalAnimationsEnabled.current
 
     AnimatedContent(
         targetState = displayText,
         modifier = modifier,
         transitionSpec = {
-            val direction = if (targetState > initialState) -1 else 1
-            ContentTransform(
-                targetContentEnter = slideInVertically(
-                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
-                    initialOffsetY = { it * direction }
-                ) + fadeIn(animationSpec = tween(150)),
-                initialContentExit = slideOutVertically(
-                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
-                    targetOffsetY = { it * -direction }
-                ) + fadeOut(animationSpec = tween(150))
-            )
+            if (animationsEnabled) {
+                val direction = if (targetState > initialState) -1 else 1
+                ContentTransform(
+                    targetContentEnter = slideInVertically(
+                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
+                        initialOffsetY = { it * direction }
+                    ) + fadeIn(animationSpec = tween(150)),
+                    initialContentExit = slideOutVertically(
+                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
+                        targetOffsetY = { it * -direction }
+                    ) + fadeOut(animationSpec = tween(150))
+                )
+            } else {
+                ContentTransform(EnterTransition.None, ExitTransition.None)
+            }
         },
         label = "AnimatedAmount"
     ) { text ->
@@ -66,21 +75,26 @@ fun AnimatedCounter(
     style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.titleLarge,
     fontWeight: FontWeight = FontWeight.Bold
 ) {
+    val animationsEnabled = LocalAnimationsEnabled.current
     AnimatedContent(
         targetState = targetValue,
         modifier = modifier,
         transitionSpec = {
-            val direction = if (targetState > initialState) -1 else 1
-            ContentTransform(
-                targetContentEnter = slideInVertically(
-                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
-                    initialOffsetY = { it * direction }
-                ) + fadeIn(animationSpec = tween(150)),
-                initialContentExit = slideOutVertically(
-                    animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
-                    targetOffsetY = { it * -direction }
-                ) + fadeOut(animationSpec = tween(150))
-            )
+            if (animationsEnabled) {
+                val direction = if (targetState > initialState) -1 else 1
+                ContentTransform(
+                    targetContentEnter = slideInVertically(
+                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
+                        initialOffsetY = { it * direction }
+                    ) + fadeIn(animationSpec = tween(150)),
+                    initialContentExit = slideOutVertically(
+                        animationSpec = spring(dampingRatio = 0.7f, stiffness = 300f),
+                        targetOffsetY = { it * -direction }
+                    ) + fadeOut(animationSpec = tween(150))
+                )
+            } else {
+                ContentTransform(EnterTransition.None, ExitTransition.None)
+            }
         },
         label = "AnimatedCounter"
     ) { value ->

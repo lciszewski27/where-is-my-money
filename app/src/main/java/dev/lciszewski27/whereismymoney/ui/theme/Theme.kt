@@ -235,6 +235,8 @@ private val CharcoalDark = darkColorScheme(
     surfaceContainer = Color(0xFF1E293B)
 )
 
+val LocalMoneyTypography = staticCompositionLocalOf { MoneyEmphasizedTypography() }
+
 @Composable
 fun WhereIsMyMoneyTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -242,6 +244,7 @@ fun WhereIsMyMoneyTheme(
     amoledMode: Boolean = false,
     animationsEnabled: Boolean = true,
     colorPreset: ColorPreset = ColorPreset.DEFAULT,
+    useSystemFont: Boolean = false,
     content: @Composable () -> Unit
 ) {
     // 1. Resolve Color Scheme cleanly, supporting both Light & Dark variations of presets.
@@ -287,12 +290,27 @@ fun WhereIsMyMoneyTheme(
         }
     }
 
+    // 4. DODANE: Logika wyboru czcionki (Quicksand vs Systemowa)
+    val currentFontFamily = if (useSystemFont) {
+        androidx.compose.ui.text.font.FontFamily.Default
+    } else {
+        QuicksandFontFamily
+    }
+
+    // 5. DODANE: Inicjalizacja typografii z wybraną czcionką
+    val appTypography = getAppTypography(currentFontFamily)
+    val moneyTypography = MoneyEmphasizedTypography(currentFontFamily)
+
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography, // Ensure these are defined in your Theme setup
-        shapes = MoneyShapes,    // Ensure these are defined in your Theme setup
+        typography = appTypography, // ZAKTUALIZOWANE: Przekazanie dynamicznie wygenerowanej typografii
+        shapes = MoneyShapes,
         content = {
-            CompositionLocalProvider(LocalAnimationsEnabled provides animationsEnabled) {
+            // ZAKTUALIZOWANE: Dodanie LocalMoneyTypography do CompositionLocalProvider obok animacji
+            CompositionLocalProvider(
+                LocalAnimationsEnabled provides animationsEnabled,
+                LocalMoneyTypography provides moneyTypography
+            ) {
                 content()
             }
         }
