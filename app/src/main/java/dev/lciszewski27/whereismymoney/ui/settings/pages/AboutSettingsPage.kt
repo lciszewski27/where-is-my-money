@@ -149,7 +149,6 @@ private fun AboutSettingsPageContent(
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    Alignment
                     Icon(
                         painter = if (appIconDrawable != null) {
                             rememberAsyncImagePainter(model = appIconDrawable)

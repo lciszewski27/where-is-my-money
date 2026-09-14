@@ -20,11 +20,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
@@ -61,6 +59,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -72,15 +71,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
-import dev.lciszewski27.whereismymoney.ui.components.CurrencyBadge
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
@@ -171,9 +167,11 @@ fun PersonDetailScreen(
             AlertDialog(
                 onDismissRequest = { splitPayoffDebtId = null },
                 title = {
-                    Text("Partial Payoff",
+                    Text(
+                        "Partial Payoff",
                         style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold)
+                        fontWeight = FontWeight.Bold
+                    )
                 },
                 text = {
                     Column(verticalArrangement = Arrangement.spacedBy(MoneySpacing.md)) {
@@ -208,8 +206,11 @@ fun PersonDetailScreen(
                         // ── Visual Slider ────────────────────────────────
                         Column {
                             val sliderValue = payoffCents.toFloat() / debt.amountCents.toFloat()
+                            val sliderState = rememberSliderState(
+                                value = sliderValue.coerceIn(0f, 1f)
+                            )
                             Slider(
-                                value = sliderValue.coerceIn(0f, 1f),
+                                state = sliderState,
                                 onValueChange = { payoffCents = (it * debt.amountCents).toLong() },
                                 colors = SliderDefaults.colors(
                                     thumbColor = MaterialTheme.colorScheme.primary,
@@ -217,20 +218,27 @@ fun PersonDetailScreen(
                                     inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
                                 )
                             )
-                            Row(modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
                                 Text("0%", style = MaterialTheme.typography.labelSmall)
                                 Text("50%", style = MaterialTheme.typography.labelSmall)
                                 Text("100%", style = MaterialTheme.typography.labelSmall)
                             }
                         }
 
-                        Row(modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(MoneySpacing.xs)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(MoneySpacing.xs)
+                        ) {
                             listOf(0.25f, 0.5f, 0.75f, 1f).forEach { percent ->
-                                val label = if (percent == 1f) "Full" else "${(percent * 100).toInt()}%"
+                                val label =
+                                    if (percent == 1f) "Full" else "${(percent * 100).toInt()}%"
                                 AssistChip(
-                                    onClick = { payoffCents = (debt.amountCents * percent).toLong() },
+                                    onClick = {
+                                        payoffCents = (debt.amountCents * percent).toLong()
+                                    },
                                     label = { Text(label) },
                                     modifier = Modifier.weight(1f),
                                     colors = AssistChipDefaults.assistChipColors(
@@ -246,7 +254,8 @@ fun PersonDetailScreen(
                             value = amountText,
                             onValueChange = {
                                 amountText = it.filter { c -> c.isDigit() || c == '.' || c == ',' }
-                                payoffCents = parseInputToCents(amountText).coerceIn(0, debt.amountCents)
+                                payoffCents =
+                                    parseInputToCents(amountText).coerceIn(0, debt.amountCents)
                             },
                             label = { Text("Amount paid") },
                             placeholder = { Text("0.00") },
@@ -259,28 +268,39 @@ fun PersonDetailScreen(
 
                         Card(
                             colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.3f)
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(
+                                    alpha = 0.3f
+                                )
                             ),
                             shape = MaterialTheme.shapes.medium
                         ) {
-                            Column(modifier = Modifier.padding(MoneySpacing.md).fillMaxWidth()) {
+                            Column(modifier = Modifier
+                                .padding(MoneySpacing.md)
+                                .fillMaxWidth()) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
                                     Column {
                                         Text("Paying", style = MaterialTheme.typography.labelSmall)
-                                        Text("${payoffCents / 100.0}$currencySymbol",
+                                        Text(
+                                            "${payoffCents / 100.0}$currencySymbol",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.tertiary)
+                                            color = MaterialTheme.colorScheme.tertiary
+                                        )
                                     }
                                     Column(horizontalAlignment = Alignment.End) {
-                                        Text("Remaining", style = MaterialTheme.typography.labelSmall)
-                                        Text("${(debt.amountCents - payoffCents) / 100.0}$currencySymbol",
+                                        Text(
+                                            "Remaining",
+                                            style = MaterialTheme.typography.labelSmall
+                                        )
+                                        Text(
+                                            "${(debt.amountCents - payoffCents) / 100.0}$currencySymbol",
                                             style = MaterialTheme.typography.titleMedium,
                                             fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.primary)
+                                            color = MaterialTheme.colorScheme.primary
+                                        )
                                     }
                                 }
                                 Spacer(Modifier.height(MoneySpacing.sm))
@@ -289,7 +309,10 @@ fun PersonDetailScreen(
                                     payoffCents.toFloat() / debt.amountCents.toFloat() else 0f
                                 androidx.compose.material3.LinearProgressIndicator(
                                     progress = { progress.coerceIn(0f, 1f) },
-                                    modifier = Modifier.fillMaxWidth().height(8.dp).padding(top = MoneySpacing.xxs),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(8.dp)
+                                        .padding(top = MoneySpacing.xxs),
                                     color = MaterialTheme.colorScheme.tertiary,
                                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
                                 )
@@ -323,8 +346,10 @@ fun PersonDetailScreen(
             onDismissRequest = { showDeleteConfirm = false },
             title = { Text("Delete Person") },
             text = {
-                Text("Are you sure you want to delete this person and all related transactions? " +
-                        "This action cannot be undone.")
+                Text(
+                    "Are you sure you want to delete this person and all related transactions? " +
+                            "This action cannot be undone."
+                )
             },
             confirmButton = {
                 TextButton(
@@ -345,16 +370,20 @@ fun PersonDetailScreen(
 
     // ── Scaffold ─────────────────────────────────────────────────────
     Scaffold(
-        modifier = modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
                 title = {
                     if (uiState.person != null) {
                         Column {
                             Text(uiState.person.name, fontWeight = FontWeight.Black)
-                            Text("Person Overview",
+                            Text(
+                                "Person Overview",
                                 style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary)
+                                color = MaterialTheme.colorScheme.primary
+                            )
                         }
                     }
                 },
@@ -372,14 +401,16 @@ fun PersonDetailScreen(
                             text = { Text("Delete Person") },
                             onClick = { showMenu = false; showDeleteConfirm = true },
                             leadingIcon = {
-                                Icon(Icons.Default.DeleteOutline, null,
-                                    tint = MaterialTheme.colorScheme.error)
+                                Icon(
+                                    Icons.Default.DeleteOutline, null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
                             }
                         )
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer
                 )
@@ -397,7 +428,9 @@ fun PersonDetailScreen(
         val person = uiState.person
 
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 100.dp),
             verticalArrangement = Arrangement.spacedBy(MoneySpacing.md)
         ) {
@@ -417,7 +450,9 @@ fun PersonDetailScreen(
             // Quick Actions
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = MoneySpacing.lg),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = MoneySpacing.lg),
                     horizontalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
                 ) {
                     Button(
@@ -569,20 +604,12 @@ private fun DebtItem(
             .fillMaxWidth()
             .clickable { showItemMenu = true }
             .padding(horizontal = MoneySpacing.xs),
-        headlineContent = {
-            Text(
-                text = debt.description.ifBlank {
-                    if (debt.type == DebtType.THEY_OWE_ME) "Received" else "Borrowed"
-                },
-                fontWeight = if (debt.isSettled) FontWeight.Normal else FontWeight.Bold,
-                color = if (debt.isSettled) MaterialTheme.colorScheme.outline
-                        else MaterialTheme.colorScheme.onSurface
-            )
-        },
         supportingContent = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Default.History, null, Modifier.size(12.dp),
-                    tint = MaterialTheme.colorScheme.outline)
+                Icon(
+                    Icons.Default.History, null, Modifier.size(12.dp),
+                    tint = MaterialTheme.colorScheme.outline
+                )
                 Spacer(Modifier.width(MoneySpacing.xxs))
                 Text(
                     text = formatTimestamp(debt.timestamp),
@@ -595,31 +622,39 @@ private fun DebtItem(
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (!debt.isSettled) {
                     IconButton(onClick = onSplitPayoff) {
-                        Icon(Icons.Default.Payments, contentDescription = "Partial Payoff",
+                        Icon(
+                            Icons.Default.Payments, contentDescription = "Partial Payoff",
                             modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.primary)
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "$sign${debt.amountCents / 100}." +
-                                "${(debt.amountCents % 100).toString().padStart(2, '0')}$currencySymbol",
+                                "${
+                                    (debt.amountCents % 100).toString().padStart(2, '0')
+                                }$currencySymbol",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Black,
                         color = amountColor
                     )
                     if (debt.isSettled) {
-                        Text("Settled",
+                        Text(
+                            "Settled",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.tertiary,
-                            fontWeight = FontWeight.Bold)
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
 
                 Box {
                     IconButton(onClick = { showItemMenu = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Item actions",
-                            modifier = Modifier.size(20.dp))
+                        Icon(
+                            Icons.Default.MoreVert, contentDescription = "Item actions",
+                            modifier = Modifier.size(20.dp)
+                        )
                     }
                     DropdownMenu(
                         expanded = showItemMenu,
@@ -633,8 +668,12 @@ private fun DebtItem(
                         DropdownMenuItem(
                             text = { Text("Delete") },
                             onClick = { showItemMenu = false; onDelete() },
-                            leadingIcon = { Icon(Icons.Default.Delete, null,
-                                tint = MaterialTheme.colorScheme.error) }
+                            leadingIcon = {
+                                Icon(
+                                    Icons.Default.Delete, null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         )
                     }
                 }
@@ -646,19 +685,30 @@ private fun DebtItem(
                     if (debt.isSettled) Icons.Filled.CheckCircle else Icons.Outlined.Circle,
                     contentDescription = null,
                     tint = if (debt.isSettled) MaterialTheme.colorScheme.tertiary
-                           else MaterialTheme.colorScheme.outline,
+                    else MaterialTheme.colorScheme.outline,
                     modifier = Modifier.size(28.dp)
                 )
             }
         },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
-    )
+    ) {
+        Text(
+            text = debt.description.ifBlank {
+                if (debt.type == DebtType.THEY_OWE_ME) "Received" else "Borrowed"
+            },
+            fontWeight = if (debt.isSettled) FontWeight.Normal else FontWeight.Bold,
+            color = if (debt.isSettled) MaterialTheme.colorScheme.outline
+            else MaterialTheme.colorScheme.onSurface
+        )
+    }
 }
 
 @Composable
 private fun EmptyDebtsPlaceholder() {
     Column(
-        modifier = Modifier.fillMaxWidth().padding(MoneySpacing.xxl),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(MoneySpacing.xxl),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
@@ -667,9 +717,11 @@ private fun EmptyDebtsPlaceholder() {
             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
         )
         Spacer(Modifier.height(MoneySpacing.sm))
-        Text("No transactions yet",
+        Text(
+            "No transactions yet",
             style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -688,6 +740,7 @@ private fun parseInputToCents(input: String): Long {
             val minor = parts[1].take(2).padEnd(2, '0').toLongOrNull() ?: 0L
             major * 100 + minor
         }
+
         else -> 0L
     }
 }
@@ -700,12 +753,18 @@ private fun PersonDetailPreview() {
             uiState = PersonDetailUiState(
                 person = Person("1", "Alice Johnson", 123456, System.currentTimeMillis()),
                 debts = listOf(
-                    Debt("d1", "1", 25000L, "USD", DebtType.THEY_OWE_ME, "Dinner",
-                        System.currentTimeMillis(), null, false),
-                    Debt("d2", "1", 10000L, "EUR", DebtType.I_OWE_THEM, "Books",
-                        System.currentTimeMillis(), System.currentTimeMillis(), false),
-                    Debt("d3", "1", 5000L, "PLN", DebtType.THEY_OWE_ME, "Coffee",
-                        System.currentTimeMillis(), null, true)
+                    Debt(
+                        "d1", "1", 25000L, "USD", DebtType.THEY_OWE_ME, "Dinner",
+                        System.currentTimeMillis(), null, false
+                    ),
+                    Debt(
+                        "d2", "1", 10000L, "EUR", DebtType.I_OWE_THEM, "Books",
+                        System.currentTimeMillis(), System.currentTimeMillis(), false
+                    ),
+                    Debt(
+                        "d3", "1", 5000L, "PLN", DebtType.THEY_OWE_ME, "Coffee",
+                        System.currentTimeMillis(), null, true
+                    )
                 ),
                 netCents = 15000L,
                 netCurrency = "USD",

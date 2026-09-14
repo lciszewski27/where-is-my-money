@@ -17,9 +17,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.TrendingDown
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.TrendingDown
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -151,7 +151,7 @@ private fun StatsScreenContent(
                 title = "Total Active",
                 value = formatCents(stats.totalActiveCents, stats.primaryCurrency),
                 subtitle = "All currencies",
-                icon = Icons.Filled.TrendingUp,
+                icon = Icons.AutoMirrored.Filled.TrendingUp,
                 color = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.weight(1f)
             )
@@ -165,7 +165,7 @@ private fun StatsScreenContent(
                 title = "Receivables",
                 value = formatCents(stats.totalReceivablesCents, stats.primaryCurrency),
                 subtitle = "They owe me",
-                icon = Icons.Filled.TrendingUp,
+                icon = Icons.AutoMirrored.Filled.TrendingUp,
                 color = MaterialTheme.colorScheme.tertiary,
                 modifier = Modifier.weight(1f)
             )
@@ -173,7 +173,7 @@ private fun StatsScreenContent(
                 title = "Payables",
                 value = formatCents(stats.totalPayablesCents, stats.primaryCurrency),
                 subtitle = "I owe them",
-                icon = Icons.Filled.TrendingDown,
+                icon = Icons.AutoMirrored.Filled.TrendingDown,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f)
             )

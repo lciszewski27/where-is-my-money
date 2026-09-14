@@ -29,14 +29,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.PersonOff
@@ -66,8 +68,10 @@ import androidx.compose.material3.ToggleButton
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -109,7 +113,10 @@ fun DashboardScreen(
 ) {
     val animationsEnabled = LocalAnimationsEnabled.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec = if (animationsEnabled) spring(dampingRatio = 0.7f, stiffness = 300f) else snap()
+        snapAnimationSpec = if (animationsEnabled) spring(
+            dampingRatio = 0.7f,
+            stiffness = 300f
+        ) else snap()
     )
     var showNewPersonDialog by remember { mutableStateOf(false) }
     var isDrawerExpanded by remember { mutableStateOf(false) }
@@ -337,19 +344,30 @@ private fun DashboardTopAppBar(
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val searchBarState = rememberSearchBarState()
+    val textFieldState = rememberTextFieldState(initialText = searchQuery)
+
+    LaunchedEffect(searchQuery) {
+        if (textFieldState.text.toString() != searchQuery) {
+            textFieldState.setTextAndPlaceCursorAtEnd(searchQuery)
+        }
+    }
+
+    LaunchedEffect(textFieldState.text) {
+        onSearchQueryChange(textFieldState.text.toString())
+    }
 
     if (isSearchActive) {
         // ── Search mode: show a compact TopAppBar with the SearchBar inside ──
         TopAppBar(
             title = {
                 SearchBar(
+                    state = searchBarState,
                     inputField = {
                         SearchBarDefaults.InputField(
-                            query = searchQuery,
-                            onQueryChange = onSearchQueryChange,
+                            textFieldState = textFieldState,
+                            searchBarState = searchBarState,
                             onSearch = { keyboardController?.hide() },
-                            expanded = false,
-                            onExpandedChange = {},
                             placeholder = { Text("Search people...") },
                             leadingIcon = {
                                 IconButton(
@@ -366,7 +384,7 @@ private fun DashboardTopAppBar(
                                 }
                             },
                             trailingIcon = {
-                                if (searchQuery.isNotEmpty()) {
+                                if (textFieldState.text.isNotEmpty()) {
                                     IconButton(
                                         onClick = onClearSearch,
                                         enabled = !isDrawerExpanded
@@ -378,13 +396,11 @@ private fun DashboardTopAppBar(
                             enabled = !isDrawerExpanded
                         )
                     },
-                    expanded = false,
-                    onExpandedChange = {},
                     modifier = Modifier.fillMaxWidth(),
                     colors = SearchBarDefaults.colors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                     )
-                ) {}
+                )
             },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.surface
@@ -419,7 +435,7 @@ private fun DashboardTopAppBar(
                     onClick = onOpenStats,
                     enabled = !isDrawerExpanded
                 ) {
-                    Icon(Icons.Filled.ShowChart, contentDescription = "Stats")
+                    Icon(Icons.AutoMirrored.Filled.ShowChart, contentDescription = "Stats")
                 }
             },
             scrollBehavior = scrollBehavior,

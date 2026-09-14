@@ -28,6 +28,8 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenu
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilledTonalButton
@@ -35,7 +37,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -54,7 +55,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import dev.lciszewski27.whereismymoney.domain.model.Category
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
@@ -102,8 +102,10 @@ fun AddDebtSheetContent(
                 onClick = { onEvent(AddDebtUiEvent.DebtTypeChanged(DebtType.THEY_OWE_ME)) },
                 shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
                 icon = {
-                    Icon(Icons.Outlined.ArrowDownward, contentDescription = null,
-                        modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Outlined.ArrowDownward, contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             ) { Text("They Owe Me", style = MaterialTheme.typography.labelLarge) }
             SegmentedButton(
@@ -111,8 +113,10 @@ fun AddDebtSheetContent(
                 onClick = { onEvent(AddDebtUiEvent.DebtTypeChanged(DebtType.I_OWE_THEM)) },
                 shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
                 icon = {
-                    Icon(Icons.Outlined.ArrowUpward, contentDescription = null,
-                        modifier = Modifier.size(18.dp))
+                    Icon(
+                        Icons.Outlined.ArrowUpward, contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
                 }
             ) { Text("I Owe Them", style = MaterialTheme.typography.labelLarge) }
         }
@@ -129,8 +133,10 @@ fun AddDebtSheetContent(
                 label = { Text("Amount") },
                 placeholder = { Text("0.00") },
                 leadingIcon = {
-                    Icon(Icons.Filled.AttachMoney, contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary)
+                    Icon(
+                        Icons.Filled.AttachMoney, contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 singleLine = true,
@@ -173,7 +179,7 @@ fun AddDebtSheetContent(
                 ) {
                     OutlinedTextField(
                         value = if (uiState.showNewPersonField) uiState.newPersonName
-                                else uiState.selectedPersonName,
+                        else uiState.selectedPersonName,
                         onValueChange = {
                             if (uiState.showNewPersonField) {
                                 onEvent(AddDebtUiEvent.NewPersonNameChanged(it))
@@ -184,7 +190,7 @@ fun AddDebtSheetContent(
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                         leadingIcon = { Icon(Icons.Default.Search, null) },
                         modifier = Modifier
-                            .menuAnchor(MenuAnchorType.PrimaryEditable)
+                            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
                             .fillMaxWidth(),
                         shape = MaterialTheme.shapes.large
                     )
@@ -247,10 +253,14 @@ fun AddDebtSheetContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            FilledTonalButton(onClick = { onEvent(AddDebtUiEvent.ToggleDatePicker) },
-                shape = MaterialTheme.shapes.medium) {
-                Icon(Icons.Filled.CalendarMonth, contentDescription = null,
-                    modifier = Modifier.size(18.dp))
+            FilledTonalButton(
+                onClick = { onEvent(AddDebtUiEvent.ToggleDatePicker) },
+                shape = MaterialTheme.shapes.medium
+            ) {
+                Icon(
+                    Icons.Filled.CalendarMonth, contentDescription = null,
+                    modifier = Modifier.size(18.dp)
+                )
                 Spacer(Modifier.width(MoneySpacing.xxs))
                 Text(if (uiState.dueDateMillis != null) "Change" else "Set Date")
             }
@@ -278,7 +288,8 @@ fun AddDebtSheetContent(
 
         // ── Category ───────────────────────────────────────────────
         var categoryExpanded by remember { mutableStateOf(false) }
-        val selectedCategory = uiState.categories.firstOrNull { it.id == uiState.selectedCategoryId }
+        val selectedCategory =
+            uiState.categories.firstOrNull { it.id == uiState.selectedCategoryId }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -296,14 +307,16 @@ fun AddDebtSheetContent(
                     readOnly = true,
                     label = { Text("Category (optional)") },
                     leadingIcon = {
-                        Icon(Icons.Filled.Folder, contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary)
+                        Icon(
+                            Icons.Filled.Folder, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     },
                     trailingIcon = {
                         ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
                     },
                     modifier = Modifier
-                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth(),
                     shape = MaterialTheme.shapes.medium,
                     singleLine = true
@@ -333,8 +346,10 @@ fun AddDebtSheetContent(
                             },
                             contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                             leadingIcon = {
-                                Icon(Icons.Filled.Folder, contentDescription = null,
-                                    modifier = Modifier.size(18.dp))
+                                Icon(
+                                    Icons.Filled.Folder, contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
                             },
                             text = {
                                 Text(
@@ -348,8 +363,10 @@ fun AddDebtSheetContent(
             }
             if (uiState.selectedCategoryId != null) {
                 IconButton(onClick = { onEvent(AddDebtUiEvent.SelectCategory(null)) }) {
-                    Icon(Icons.Filled.Close, contentDescription = "Clear category",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                    Icon(
+                        Icons.Filled.Close, contentDescription = "Clear category",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                    )
                 }
             }
         }
@@ -359,7 +376,9 @@ fun AddDebtSheetContent(
         // ── Save Button ─────────────────────────────────────────────
         Button(
             onClick = { onEvent(AddDebtUiEvent.SaveDebt) },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
             shape = MaterialTheme.shapes.large,
             enabled = (uiState.selectedPersonId != null || uiState.newPersonName.isNotBlank()) &&
                     uiState.amountCents > 0
@@ -395,7 +414,9 @@ private fun CurrencyDropdown(
             onValueChange = {},
             readOnly = true,
             label = { Text("Currency") },
-            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+            modifier = Modifier
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                .fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
             singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) }

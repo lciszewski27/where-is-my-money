@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -14,7 +13,8 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,7 +45,6 @@ import dev.lciszewski27.whereismymoney.ui.settings.SettingsViewModel
 import dev.lciszewski27.whereismymoney.ui.stats.StatsScreen
 import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -78,7 +77,11 @@ fun AppNavHost(
     var showAddDebtSheet by remember { mutableStateOf(false) }
     var editingDebtId by remember { mutableStateOf<String?>(null) }
     var initialPersonId by remember { mutableStateOf<String?>(null) }
-    var initialDebtType by remember { mutableStateOf<dev.lciszewski27.whereismymoney.domain.model.DebtType?>(null) }
+    var initialDebtType by remember {
+        mutableStateOf<dev.lciszewski27.whereismymoney.domain.model.DebtType?>(
+            null
+        )
+    }
 
     // Collect navigation events
     LaunchedEffect(Unit) {
@@ -126,7 +129,10 @@ fun AppNavHost(
 
     // Modal Bottom Sheet for Add/Edit Debt
     if (showAddDebtSheet && addDebtViewModel != null) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+        val sheetState = rememberBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded)
+        )
         val addDebtUiState by addDebtViewModel.uiState.collectAsState()
 
         LaunchedEffect(Unit) {
@@ -165,7 +171,8 @@ fun AppNavHost(
     ) { uri ->
         if (uri != null) {
             scope.launch(Dispatchers.IO) {
-                val json = context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
+                val json =
+                    context.contentResolver.openInputStream(uri)?.bufferedReader()?.readText()
                 if (json != null) {
                     app.backupService.importFromJson(json)
                 }
@@ -299,9 +306,11 @@ fun AppNavHost(
                         SettingsUiEvent.ExportBackup -> {
                             exportLauncher.launch("whereismymoney_backup.json")
                         }
+
                         SettingsUiEvent.ImportBackup -> {
                             importLauncher.launch(arrayOf("application/json"))
                         }
+
                         else -> settingsViewModel.onEvent(event)
                     }
                 }
