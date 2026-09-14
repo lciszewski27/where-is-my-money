@@ -39,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.lciszewski27.whereismymoney.BuildConfig
 import dev.lciszewski27.whereismymoney.ui.settings.components.SettingsMenuItem
 import dev.lciszewski27.whereismymoney.ui.settings.pages.AppearanceSettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.BackupSettingsPage
@@ -204,7 +205,7 @@ private fun MainSettingsPage(onNavigate: (SettingsPage) -> Unit) {
 
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Where is my money? v1.1",
+            text = "Where is my money? v${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.outline,
             modifier = Modifier.padding(horizontal = 12.dp)

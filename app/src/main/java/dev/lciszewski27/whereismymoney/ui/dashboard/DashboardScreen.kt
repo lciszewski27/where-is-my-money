@@ -36,6 +36,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material.icons.outlined.PersonOff
@@ -179,6 +180,7 @@ fun DashboardScreen(
                 onSearchQueryChange = { onEvent(DashboardUiEvent.Search(it)) },
                 onClearSearch = { onEvent(DashboardUiEvent.ClearSearch) },
                 onOpenSettings = { onEvent(DashboardUiEvent.OpenSettings) },
+                onOpenStats = { onEvent(DashboardUiEvent.OpenStats) },
                 scrollBehavior = scrollBehavior,
                 isDrawerExpanded = isDrawerExpanded
             )
@@ -329,6 +331,7 @@ private fun DashboardTopAppBar(
     onSearchQueryChange: (String) -> Unit,
     onClearSearch: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenStats: () -> Unit,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
     isDrawerExpanded: Boolean
 ) {
@@ -411,6 +414,12 @@ private fun DashboardTopAppBar(
                 }
                 IconButton(onClick = onOpenSettings, enabled = !isDrawerExpanded) {
                     Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                }
+                IconButton(
+                    onClick = onOpenStats,
+                    enabled = !isDrawerExpanded
+                ) {
+                    Icon(Icons.Filled.ShowChart, contentDescription = "Stats")
                 }
             },
             scrollBehavior = scrollBehavior,

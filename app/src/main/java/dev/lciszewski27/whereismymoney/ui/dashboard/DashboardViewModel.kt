@@ -40,6 +40,9 @@ class DashboardViewModel(
     private val _navigateToSettings = MutableSharedFlow<Unit>()
     val navigateToSettings: SharedFlow<Unit> = _navigateToSettings.asSharedFlow()
 
+    private val _navigateToStats = MutableSharedFlow<Unit>()
+    val navigateToStats: SharedFlow<Unit> = _navigateToStats.asSharedFlow()
+
     init {
         observeData()
     }
@@ -135,6 +138,9 @@ class DashboardViewModel(
             }
             is DashboardUiEvent.OpenSettings -> {
                 viewModelScope.launch { _navigateToSettings.emit(Unit) }
+            }
+            is DashboardUiEvent.OpenStats -> {
+                viewModelScope.launch { _navigateToStats.emit(Unit) }
             }
             is DashboardUiEvent.SettlePerson -> {
                 viewModelScope.launch {

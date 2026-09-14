@@ -51,6 +51,7 @@ class WhereIsMyMoneyApp : Application() {
         repository = DebtRepositoryImpl(
             personDao = database.personDao(),
             debtDao = database.debtDao(),
+            categoryDao = database.categoryDao(),
             currencyConversion = currencyConversion
         )
 
@@ -61,7 +62,8 @@ class WhereIsMyMoneyApp : Application() {
         // ── Backup ───────────────────────────────────────────────────
         backupService = BackupService(
             personDao = database.personDao(),
-            debtDao = database.debtDao()
+            debtDao = database.debtDao(),
+            categoryDao = database.categoryDao()
         )
     }
 }

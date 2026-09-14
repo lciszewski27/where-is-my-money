@@ -2,8 +2,10 @@ package dev.lciszewski27.whereismymoney.data.local
 
 import android.content.Context
 import android.net.Uri
+import dev.lciszewski27.whereismymoney.data.local.dao.CategoryDao
 import dev.lciszewski27.whereismymoney.data.local.dao.DebtDao
 import dev.lciszewski27.whereismymoney.data.local.dao.PersonDao
+import dev.lciszewski27.whereismymoney.data.local.entity.CategoryEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.DebtEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.PersonEntity
 import kotlinx.coroutines.Dispatchers
@@ -18,19 +20,22 @@ import kotlinx.serialization.json.Json
 @Serializable
 data class BackupData(
     val persons: List<PersonEntity>,
-    val debts: List<DebtEntity>
+    val debts: List<DebtEntity>,
+    val categories: List<CategoryEntity> = emptyList()
 )
 
 class BackupService(
     private val personDao: PersonDao,
-    private val debtDao: DebtDao
+    private val debtDao: DebtDao,
+    private val categoryDao: CategoryDao
 ) {
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
 
     suspend fun exportToJson(): String = withContext(Dispatchers.IO) {
         val persons = personDao.getAll()
         val debts = debtDao.getAll()
-        json.encodeToString(BackupData(persons, debts))
+        val categories = categoryDao.getAll()
+        json.encodeToString(BackupData(persons, debts, categories))
     }
 
     suspend fun importFromJson(jsonString: String): Int = withContext(Dispatchers.IO) {
@@ -42,6 +47,10 @@ class BackupService(
         }
         for (debt in backup.debts) {
             debtDao.insert(debt)
+            count++
+        }
+        for (category in backup.categories) {
+            categoryDao.insert(category)
             count++
         }
         count

@@ -8,6 +8,7 @@ import androidx.room.Query
 import androidx.room.Update
 import dev.lciszewski27.whereismymoney.data.local.entity.DebtEntity
 import kotlinx.coroutines.flow.Flow
+import java.util.Date
 
 @Dao
 interface DebtDao {
@@ -62,4 +63,32 @@ interface DebtDao {
 
     @Query("SELECT DISTINCT currency FROM debts WHERE isSettled = 0")
     suspend fun getActiveCurrencies(): List<String>
+
+    // ── Stats Queries ────────────────────────────────────────────────
+
+    /** All debts sorted by timestamp (ascending) for time-series stats. */
+    @Query("SELECT * FROM debts ORDER BY timestamp ASC")
+    fun observeAllAscending(): Flow<List<DebtEntity>>
+
+    /** All debts ever created (including settled) for comprehensive stats. */
+    @Query("SELECT * FROM debts")
+    suspend fun getAllIncludingSettled(): List<DebtEntity>
+
+    /** Count of debts per category. */
+    @Query("SELECT categoryId, COUNT(*) AS count FROM debts WHERE isSettled = 0 GROUP BY categoryId")
+    fun observeActiveCountByCategory(): Flow<List<CategoryCount>>
+
+    /** Total cents per category for active debts. */
+    @Query("SELECT categoryId, SUM(amountCents) AS totalCents FROM debts WHERE isSettled = 0 GROUP BY categoryId")
+    fun observeActiveTotalByCategory(): Flow<List<CategoryTotal>>
 }
+
+data class CategoryCount(
+    val categoryId: String?,
+    val count: Int
+)
+
+data class CategoryTotal(
+    val categoryId: String?,
+    val totalCents: Long
+)

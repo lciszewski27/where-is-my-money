@@ -111,9 +111,20 @@ class PersonDetailViewModel(
                         // Full settle
                         repository.updateDebt(debt.copy(isSettled = true))
                     } else if (event.amountCents > 0) {
-                        // Partial settle: reduce original debt and maybe create a history record?
-                        // For simplicity, we just reduce the amount of the current debt.
-                        repository.updateDebt(debt.copy(amountCents = debt.amountCents - event.amountCents))
+                        // Partial settle: mark the original debt as settled (preserves base amount for history/stats)
+                        repository.updateDebt(debt.copy(isSettled = true))
+                        // Create a new debt with the REMAINING amount so current balance reflects correctly
+                        val remainingDebt = debt.copy(
+                            id = java.util.UUID.randomUUID().toString(),
+                            amountCents = debt.amountCents - event.amountCents,
+                            description = debt.description.ifBlank {
+                                if (debt.type == dev.lciszewski27.whereismymoney.domain.model.DebtType.THEY_OWE_ME)
+                                    "Remaining" else "Remaining"
+                            },
+                            timestamp = System.currentTimeMillis(),
+                            isSettled = false
+                        )
+                        repository.insertDebt(remainingDebt)
                     }
                 }
             }

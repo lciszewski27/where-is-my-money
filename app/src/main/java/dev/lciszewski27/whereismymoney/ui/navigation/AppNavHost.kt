@@ -42,6 +42,7 @@ import dev.lciszewski27.whereismymoney.ui.person.PersonDetailViewModel
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsScreen
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsUiEvent
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsViewModel
+import dev.lciszewski27.whereismymoney.ui.stats.StatsScreen
 import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -96,6 +97,11 @@ fun AppNavHost(
     LaunchedEffect(Unit) {
         dashboardViewModel.navigateToSettings.collect {
             navController.navigate(Route.Settings)
+        }
+    }
+    LaunchedEffect(Unit) {
+        dashboardViewModel.navigateToStats.collect {
+            navController.navigate(Route.Stats)
         }
     }
 
@@ -299,6 +305,13 @@ fun AppNavHost(
                         else -> settingsViewModel.onEvent(event)
                     }
                 }
+            )
+        }
+
+        composable<Route.Stats> {
+            StatsScreen(
+                onNavigateBack = { navController.popBackStack() },
+                modifier = Modifier.fillMaxSize()
             )
         }
     }

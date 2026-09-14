@@ -13,7 +13,8 @@ data class Debt(
     val description: String,
     val timestamp: Long,
     val dueDateMillis: Long?,
-    val isSettled: Boolean
+    val isSettled: Boolean,
+    val categoryId: String? = null
 ) {
     /**
      * Human-readable major-unit amount (e.g. "12.50" for 1250 cents).

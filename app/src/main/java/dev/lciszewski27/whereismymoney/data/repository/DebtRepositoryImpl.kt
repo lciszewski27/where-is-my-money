@@ -1,13 +1,18 @@
 package dev.lciszewski27.whereismymoney.data.repository
 
+import dev.lciszewski27.whereismymoney.data.local.dao.CategoryDao
 import dev.lciszewski27.whereismymoney.data.local.dao.DebtDao
 import dev.lciszewski27.whereismymoney.data.local.dao.PersonDao
+import dev.lciszewski27.whereismymoney.data.local.entity.CategoryEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.DebtEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.PersonEntity
+import dev.lciszewski27.whereismymoney.domain.model.Category
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
+import dev.lciszewski27.whereismymoney.domain.model.StatsMonthlyTrend
+import dev.lciszewski27.whereismymoney.domain.model.StatsSummary
 import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
 import dev.lciszewski27.whereismymoney.domain.usecase.CurrencyConversionUseCase
 import kotlinx.coroutines.flow.Flow
@@ -17,6 +22,7 @@ import kotlinx.coroutines.flow.map
 class DebtRepositoryImpl(
     private val personDao: PersonDao,
     private val debtDao: DebtDao,
+    private val categoryDao: CategoryDao,
     private val currencyConversion: CurrencyConversionUseCase
 ) : DebtRepository {
 
@@ -34,14 +40,24 @@ class DebtRepositoryImpl(
         id = id, personId = personId, amountCents = amountCents,
         currency = currency, type = DebtType.fromDb(type),
         description = description, timestamp = timestamp,
-        dueDateMillis = dueDateMillis, isSettled = isSettled
+        dueDateMillis = dueDateMillis, isSettled = isSettled,
+        categoryId = categoryId
     )
 
     private fun Debt.toEntity(): DebtEntity = DebtEntity(
         id = id, personId = personId, amountCents = amountCents,
         currency = currency, type = type.dbValue,
         description = description, timestamp = timestamp,
-        dueDateMillis = dueDateMillis, isSettled = isSettled
+        dueDateMillis = dueDateMillis, isSettled = isSettled,
+        categoryId = categoryId
+    )
+
+    private fun CategoryEntity.toDomain(): Category = Category(
+        id = id, name = name, colorSeed = colorSeed, createdAt = createdAt
+    )
+
+    private fun Category.toEntity(): CategoryEntity = CategoryEntity(
+        id = id, name = name, colorSeed = colorSeed, createdAt = createdAt
     )
 
     // ── Persons ──────────────────────────────────────────────────────
@@ -125,6 +141,20 @@ class DebtRepositoryImpl(
     override suspend fun settleAllForPerson(personId: String) =
         debtDao.settleAllForPerson(personId)
 
+    // ── Categories ───────────────────────────────────────────────────
+
+    override fun observeCategories(): Flow<List<Category>> =
+        categoryDao.observeAll().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun getCategories(): List<Category> =
+        categoryDao.getAll().map { it.toDomain() }
+
+    override suspend fun insertCategory(category: Category) =
+        categoryDao.insert(category.toEntity())
+
+    override suspend fun deleteCategory(id: String) =
+        categoryDao.deleteById(id)
+
     // ── Aggregates ───────────────────────────────────────────────────
 
     override fun observeDashboardSummary(primaryCurrency: String): Flow<DashboardSummary> {
@@ -159,4 +189,78 @@ class DebtRepositoryImpl(
     override suspend fun getActiveCurrencies(): List<String> {
         return debtDao.getActiveCurrencies()
     }
+
+    // ── Stats ────────────────────────────────────────────────────────
+
+    override suspend fun getStatsSummary(primaryCurrency: String): StatsSummary {
+        val allEntities = debtDao.getAllIncludingSettled()
+        val allDebts = allEntities.map { it.toDomain() }
+
+        val activeDebts = allDebts.filter { !it.isSettled }
+        val settledDebts = allDebts.filter { it.isSettled }
+
+        // Convert totals to primary currency
+        var totalActiveCents = 0L
+        var totalSettledCents = 0L
+        var totalReceivablesCents = 0L
+        var totalPayablesCents = 0L
+
+        for (debt in allDebts) {
+            val converted = currencyConversion.convert(debt.amountCents, debt.currency, primaryCurrency)
+            if (debt.isSettled) {
+                totalSettledCents += converted
+            } else {
+                totalActiveCents += converted
+            }
+            when (debt.type) {
+                DebtType.THEY_OWE_ME -> totalReceivablesCents += converted
+                DebtType.I_OWE_THEM -> totalPayablesCents += converted
+            }
+        }
+
+        // Build monthly trends from all debts
+        val monthlyMap = mutableMapOf<String, MutableList<Debt>>()
+        for (debt in allDebts) {
+            val cal = java.util.Calendar.getInstance().apply { timeInMillis = debt.timestamp }
+            val key = "${cal.get(java.util.Calendar.YEAR)}-${cal.get(java.util.Calendar.MONTH) + 1}"
+            monthlyMap.getOrPut(key) { mutableListOf() }.add(debt)
+        }
+
+        val monthlyTrends = monthlyMap.entries.sortedBy { it.key }.map { (key, debts) ->
+            val parts = key.split("-")
+            var receivables = 0L
+            var payables = 0L
+            for (d in debts) {
+                val converted = currencyConversion.convert(d.amountCents, d.currency, primaryCurrency)
+                when (d.type) {
+                    DebtType.THEY_OWE_ME -> receivables += converted
+                    DebtType.I_OWE_THEM -> payables += converted
+                }
+            }
+            StatsMonthlyTrend(
+                yearMonth = key,
+                year = parts[0].toIntOrNull() ?: 0,
+                month = parts.getOrNull(1)?.toIntOrNull() ?: 0,
+                receivablesCents = receivables,
+                payablesCents = payables,
+                netCents = receivables - payables
+            )
+        }
+
+        return StatsSummary(
+            totalActiveCents = totalActiveCents,
+            totalSettledCents = totalSettledCents,
+            totalReceivablesCents = totalReceivablesCents,
+            totalPayablesCents = totalPayablesCents,
+            activeDebtCount = activeDebts.size,
+            settledDebtCount = settledDebts.size,
+            monthlyTrends = monthlyTrends,
+            activeDebts = activeDebts,
+            settledDebts = settledDebts,
+            primaryCurrency = primaryCurrency
+        )
+    }
+
+    override fun observeAllDebtsAscending(): Flow<List<Debt>> =
+        debtDao.observeAllAscending().map { list -> list.map { it.toDomain() } }
 }

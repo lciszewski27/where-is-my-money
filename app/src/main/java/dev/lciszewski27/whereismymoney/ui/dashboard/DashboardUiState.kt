@@ -33,6 +33,7 @@ sealed interface DashboardUiEvent {
     data object AddDebt : DashboardUiEvent
     data class OpenPerson(val personId: String) : DashboardUiEvent
     data object OpenSettings : DashboardUiEvent
+    data object OpenStats : DashboardUiEvent
     data class SettlePerson(val personId: String) : DashboardUiEvent
     data class DeletePerson(val personId: String) : DashboardUiEvent
     data class QuickAddDebt(val personId: String, val type: dev.lciszewski27.whereismymoney.domain.model.DebtType) : DashboardUiEvent

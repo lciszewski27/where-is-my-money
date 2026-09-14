@@ -63,11 +63,13 @@ class AddDebtViewModel(
         viewModelScope.launch {
             val persons = repository.observePersons().first()
             val primaryCurrency = preferences.primaryCurrency.first()
+            val categories = repository.observeCategories().first()
 
             _uiState.update { state ->
                 state.copy(
                     persons = persons,
-                    currency = primaryCurrency
+                    currency = primaryCurrency,
+                    categories = categories
                 )
             }
         }
@@ -85,7 +87,8 @@ class AddDebtViewModel(
                 currency = debt.currency,
                 debtType = debt.type,
                 description = debt.description,
-                dueDateMillis = debt.dueDateMillis
+                dueDateMillis = debt.dueDateMillis,
+                selectedCategoryId = debt.categoryId
             )
         }
     }
@@ -94,6 +97,9 @@ class AddDebtViewModel(
         when (event) {
             is AddDebtUiEvent.SelectPerson -> {
                 _uiState.update { it.copy(selectedPersonId = event.personId, selectedPersonName = event.personName) }
+            }
+            is AddDebtUiEvent.SelectCategory -> {
+                _uiState.update { it.copy(selectedCategoryId = event.categoryId) }
             }
             is AddDebtUiEvent.AmountChanged -> {
                 val cleaned = event.text.filter { c -> c.isDigit() || c == ',' || c == '.' }
@@ -157,7 +163,8 @@ class AddDebtViewModel(
                 description = state.description.trim(),
                 timestamp = System.currentTimeMillis(),
                 dueDateMillis = state.dueDateMillis,
-                isSettled = false
+                isSettled = false,
+                categoryId = state.selectedCategoryId
             )
 
             if (state.isEditing) {

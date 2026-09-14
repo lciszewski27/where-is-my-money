@@ -1,13 +1,16 @@
 package dev.lciszewski27.whereismymoney.domain.repository
 
+import dev.lciszewski27.whereismymoney.domain.model.Category
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
+import dev.lciszewski27.whereismymoney.domain.model.StatsMonthlyTrend
+import dev.lciszewski27.whereismymoney.domain.model.StatsSummary
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Single source of truth for all person and debt data.
+ * Single source of truth for all person, debt, and category data.
  */
 interface DebtRepository {
 
@@ -33,8 +36,20 @@ interface DebtRepository {
     suspend fun deleteDebt(id: String)
     suspend fun settleAllForPerson(personId: String)
 
+    // ── Categories ───────────────────────────────────────────────────
+
+    fun observeCategories(): Flow<List<Category>>
+    suspend fun getCategories(): List<Category>
+    suspend fun insertCategory(category: Category)
+    suspend fun deleteCategory(id: String)
+
     // ── Aggregates ───────────────────────────────────────────────────
 
     fun observeDashboardSummary(primaryCurrency: String): Flow<DashboardSummary>
     suspend fun getActiveCurrencies(): List<String>
+
+    // ── Stats ────────────────────────────────────────────────────────
+
+    suspend fun getStatsSummary(primaryCurrency: String): StatsSummary
+    fun observeAllDebtsAscending(): Flow<List<Debt>>
 }

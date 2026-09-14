@@ -1,5 +1,6 @@
 package dev.lciszewski27.whereismymoney.ui.adddebt
 
+import dev.lciszewski27.whereismymoney.domain.model.Category
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
@@ -9,7 +10,9 @@ import dev.lciszewski27.whereismymoney.domain.model.Person
  */
 data class AddDebtUiState(
     val persons: List<Person> = emptyList(),
+    val categories: List<Category> = emptyList(),
     val selectedPersonId: String? = null,
+    val selectedCategoryId: String? = null,
     val amountCents: Long = 0L,
     val amountText: String = "",
     val currency: String = "PLN",
@@ -29,6 +32,7 @@ data class AddDebtUiState(
  */
 sealed interface AddDebtUiEvent {
     data class SelectPerson(val personId: String, val personName: String) : AddDebtUiEvent
+    data class SelectCategory(val categoryId: String?) : AddDebtUiEvent
     data class AmountChanged(val text: String) : AddDebtUiEvent
     data class CurrencyChanged(val currency: String) : AddDebtUiEvent
     data class DebtTypeChanged(val debtType: DebtType) : AddDebtUiEvent

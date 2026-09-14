@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
+import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
@@ -53,6 +54,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import dev.lciszewski27.whereismymoney.domain.model.Category
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
@@ -272,6 +274,84 @@ fun AddDebtSheetContent(
                     }) { Text("Clear") }
                 }
             ) { DatePicker(state = datePickerState) }
+        }
+
+        // ── Category ───────────────────────────────────────────────
+        var categoryExpanded by remember { mutableStateOf(false) }
+        val selectedCategory = uiState.categories.firstOrNull { it.id == uiState.selectedCategoryId }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
+        ) {
+            ExposedDropdownMenuBox(
+                expanded = categoryExpanded,
+                onExpandedChange = { categoryExpanded = it },
+                modifier = Modifier.weight(1f)
+            ) {
+                OutlinedTextField(
+                    value = selectedCategory?.name ?: "No category",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Category (optional)") },
+                    leadingIcon = {
+                        Icon(Icons.Filled.Folder, contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary)
+                    },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(expanded = categoryExpanded)
+                    },
+                    modifier = Modifier
+                        .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    singleLine = true
+                )
+                ExposedDropdownMenu(
+                    expanded = categoryExpanded,
+                    onDismissRequest = { categoryExpanded = false }
+                ) {
+                    DropdownMenuItem(
+                        onClick = {
+                            categoryExpanded = false
+                            onEvent(AddDebtUiEvent.SelectCategory(null))
+                        },
+                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                        text = {
+                            Text(
+                                "No category",
+                                fontWeight = if (uiState.selectedCategoryId == null) FontWeight.Bold else FontWeight.Normal
+                            )
+                        }
+                    )
+                    uiState.categories.forEach { category ->
+                        DropdownMenuItem(
+                            onClick = {
+                                categoryExpanded = false
+                                onEvent(AddDebtUiEvent.SelectCategory(category.id))
+                            },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                            leadingIcon = {
+                                Icon(Icons.Filled.Folder, contentDescription = null,
+                                    modifier = Modifier.size(18.dp))
+                            },
+                            text = {
+                                Text(
+                                    category.name,
+                                    fontWeight = if (category.id == uiState.selectedCategoryId) FontWeight.Bold else FontWeight.Normal
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+            if (uiState.selectedCategoryId != null) {
+                IconButton(onClick = { onEvent(AddDebtUiEvent.SelectCategory(null)) }) {
+                    Icon(Icons.Filled.Close, contentDescription = "Clear category",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f))
+                }
+            }
         }
 
         Spacer(Modifier.height(MoneySpacing.xs))

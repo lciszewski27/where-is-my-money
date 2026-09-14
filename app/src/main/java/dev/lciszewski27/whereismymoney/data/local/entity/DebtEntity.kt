@@ -38,5 +38,6 @@ data class DebtEntity(
     val description: String = "",
     val timestamp: Long = System.currentTimeMillis(),
     val dueDateMillis: Long? = null,
-    val isSettled: Boolean = false
+    val isSettled: Boolean = false,
+    val categoryId: String? = null
 )
