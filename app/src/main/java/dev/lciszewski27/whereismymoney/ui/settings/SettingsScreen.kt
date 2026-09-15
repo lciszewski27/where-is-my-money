@@ -47,6 +47,7 @@ import dev.lciszewski27.whereismymoney.ui.settings.pages.CategoriesSettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.AboutSettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.CurrencySettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.ExchangeRatesSettingsPage
+import dev.lciszewski27.whereismymoney.ui.settings.pages.LicensesSettingsPage
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,6 +77,7 @@ fun SettingsScreen(
                             SettingsPage.BACKUP -> "Backup & Data"
                             SettingsPage.ABOUT -> "About"
                             SettingsPage.CATEGORIES -> "Categories"
+                            SettingsPage.LICENSES -> "Open Source Licenses"
                         },
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.titleLarge
@@ -107,20 +109,31 @@ fun SettingsScreen(
             },
             label = "settings_page_transition"
         ) { page ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding)
-                    .verticalScroll(rememberScrollState())
-            ) {
-                when (page) {
-                    SettingsPage.MAIN -> MainSettingsPage(onNavigate = { currentPage = it })
-                    SettingsPage.APPEARANCE -> AppearanceSettingsPage(uiState, onEvent)
-                    SettingsPage.CURRENCY -> CurrencySettingsPage(uiState, onEvent)
-                    SettingsPage.EXCHANGE_RATES -> ExchangeRatesSettingsPage(uiState, onEvent)
-                    SettingsPage.BACKUP -> BackupSettingsPage(onEvent)
-                    SettingsPage.ABOUT -> AboutSettingsPage(onEvent)
-                    SettingsPage.CATEGORIES -> CategoriesSettingsPage()
+            if (page == SettingsPage.LICENSES) {
+                // Licenses page is self-scrolling (LibrariesContainer) —
+                // render outside the scrollable Column to avoid infinite height crash
+                LicensesSettingsPage(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                )
+            } else {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(innerPadding)
+                        .verticalScroll(rememberScrollState())
+                ) {
+                    when (page) {
+                        SettingsPage.MAIN -> MainSettingsPage(onNavigate = { currentPage = it })
+                        SettingsPage.APPEARANCE -> AppearanceSettingsPage(uiState, onEvent)
+                        SettingsPage.CURRENCY -> CurrencySettingsPage(uiState, onEvent)
+                        SettingsPage.EXCHANGE_RATES -> ExchangeRatesSettingsPage(uiState, onEvent)
+                        SettingsPage.BACKUP -> BackupSettingsPage(onEvent)
+                        SettingsPage.ABOUT -> AboutSettingsPage(onEvent, onNavigate = { currentPage = it })
+                        SettingsPage.CATEGORIES -> CategoriesSettingsPage()
+                        SettingsPage.LICENSES -> {} // handled above
+                    }
                 }
             }
         }

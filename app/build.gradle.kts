@@ -1,9 +1,12 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.parcelize)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.aboutlibraries)
 }
 
 android {
@@ -39,9 +42,15 @@ android {
     }
 }
 
+aboutLibraries {
+    // The Android plugin (v13+) automatically hooks into the build process
+    // and generates `aboutlibraries.json` into the app's raw resources.
+    // No manual task wiring is needed anymore.
+}
+
 kotlin {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -83,6 +92,9 @@ dependencies {
 
     implementation(libs.compose.icons)
 
+    // AboutLibraries (dynamic OSS license generation, Material 3 UI)
+    implementation(libs.aboutlibraries.compose.m3)
+
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
@@ -92,4 +104,3 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
 }
-

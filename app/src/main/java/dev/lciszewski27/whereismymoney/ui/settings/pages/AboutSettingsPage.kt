@@ -21,9 +21,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
@@ -58,10 +61,15 @@ import androidx.compose.ui.unit.sp
 import coil.compose.SubcomposeAsyncImage
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.mikepenz.aboutlibraries.Libs
+import com.mikepenz.aboutlibraries.util.withContext as withAboutLibrariesJson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import compose.icons.SimpleIcons
 import compose.icons.simpleicons.Github
 import dev.lciszewski27.whereismymoney.BuildConfig
 import dev.lciszewski27.whereismymoney.domain.model.Contributor
+import dev.lciszewski27.whereismymoney.ui.settings.SettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsUiEvent
 import dev.lciszewski27.whereismymoney.ui.theme.LocalAnimationsEnabled
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
@@ -70,29 +78,47 @@ import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
-internal fun AboutSettingsPage(onEvent: (SettingsUiEvent) -> Unit) {
+internal fun AboutSettingsPage(
+    onEvent: (SettingsUiEvent) -> Unit,
+    onNavigate: (SettingsPage) -> Unit
+) {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     var contributors by remember { mutableStateOf<List<Contributor>>(emptyList()) }
+    // License count is read off the main thread: the generated data may be
+    // large, and `build()` throws when it is missing — never crash the page.
+    var libsCount by remember { mutableStateOf<Int?>(null) }
 
     LaunchedEffect(Unit) {
         contributors = loadContributors(context.resources)
     }
+    LaunchedEffect(context.applicationContext) {
+        val appContext = context.applicationContext
+        libsCount = withContext(Dispatchers.IO) {
+            runCatching {
+                Libs.Builder().withAboutLibrariesJson(appContext).build().libraries.size
+            }.getOrNull()
+        }
+    }
 
     AboutSettingsPageContent(
         contributors = contributors,
+        libsCount = libsCount,
         onContributorClick = { contributor ->
             if (contributor.githubUrl.isNotBlank()) {
                 uriHandler.openUri(contributor.githubUrl)
             }
-        }
+        },
+        onNavigateToLicenses = { onNavigate(SettingsPage.LICENSES) }
     )
 }
 
 @Composable
 private fun AboutSettingsPageContent(
     contributors: List<Contributor>,
-    onContributorClick: (Contributor) -> Unit
+    libsCount: Int?,
+    onContributorClick: (Contributor) -> Unit,
+    onNavigateToLicenses: () -> Unit
 ) {
     val animationsEnabled = LocalAnimationsEnabled.current
     val versionName = BuildConfig.VERSION_NAME
@@ -278,6 +304,74 @@ private fun AboutSettingsPageContent(
             }
 
             Spacer(Modifier.height(MoneySpacing.xl))
+        }
+        // ── Open source section: label kept tight to its card ────
+        Column(verticalArrangement = Arrangement.spacedBy(MoneySpacing.xs)) {
+            Text(
+                "Also great open source software",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.padding(horizontal = MoneySpacing.sm),
+            )
+            // ── Open Source Licenses link (always reachable) ────────
+            LicensesLinkCard(
+                libsCount = libsCount,
+                onClick = onNavigateToLicenses,
+            )
+        }
+
+        Spacer(Modifier.height(MoneySpacing.xl))
+    }
+}
+
+/**
+ * M3 Expressive entry point to the build-time generated open source licenses.
+ */
+@Composable
+private fun LicensesLinkCard(
+    libsCount: Int?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .clip(MaterialTheme.shapes.medium)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(horizontal = MoneySpacing.md, vertical = MoneySpacing.md)
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Description,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.width(MoneySpacing.sm))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Open Source Licenses",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = libsCount?.let { "This app uses $it open source libraries" }
+                        ?: "Licenses of the app's open source dependencies",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -475,7 +569,9 @@ private fun AboutSettingsPagePreview() {
     WhereIsMyMoneyTheme {
         AboutSettingsPageContent(
             contributors = sampleContributors,
-            onContributorClick = {}
+            libsCount = 42,
+            onContributorClick = {},
+            onNavigateToLicenses = {}
         )
     }
 }
