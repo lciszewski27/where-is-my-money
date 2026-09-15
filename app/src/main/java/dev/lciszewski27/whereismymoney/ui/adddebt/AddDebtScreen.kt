@@ -24,10 +24,12 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -64,7 +66,7 @@ import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AddDebtSheetContent(
     uiState: AddDebtUiState,
@@ -373,13 +375,13 @@ fun AddDebtSheetContent(
 
         Spacer(Modifier.height(MoneySpacing.xs))
 
-        // ── Save Button ─────────────────────────────────────────────
+        // ── Save Button (M3 Expressive: morphs shape on press) ───
         Button(
             onClick = { onEvent(AddDebtUiEvent.SaveDebt) },
+            shapes = ButtonDefaults.shapes(),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            shape = MaterialTheme.shapes.large,
             enabled = (uiState.selectedPersonId != null || uiState.newPersonName.isNotBlank()) &&
                     uiState.amountCents > 0
         ) {

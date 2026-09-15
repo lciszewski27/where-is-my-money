@@ -77,6 +77,7 @@ import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
+import dev.lciszewski27.whereismymoney.ui.components.ExpressiveLinearProgress
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
@@ -203,12 +204,25 @@ fun PersonDetailScreen(
                             }
                         }
 
-                        // ── Visual Slider ────────────────────────────────
+                        // ── Amount slider: payoffCents is the single source of
+                        // truth, so the thumb always tracks the numbers no
+                        // matter which input (slider, chips, text) changed them.
                         Column {
-                            val sliderValue = payoffCents.toFloat() / debt.amountCents.toFloat()
-                            val sliderState = rememberSliderState(
-                                value = sliderValue.coerceIn(0f, 1f)
-                            )
+                            val sliderFraction =
+                                if (debt.amountCents > 0)
+                                    (payoffCents.toFloat() / debt.amountCents.toFloat())
+                                        .coerceIn(0f, 1f)
+                                else 0f
+                            val sliderState = rememberSliderState()
+                            // Push edits from the chips/text field into the thumb.
+                            // Drags write sliderState internally and report through
+                            // onValueChange, so the equality guard never fights
+                            // the finger.
+                            LaunchedEffect(sliderFraction) {
+                                if (sliderState.value != sliderFraction) {
+                                    sliderState.value = sliderFraction
+                                }
+                            }
                             Slider(
                                 state = sliderState,
                                 onValueChange = { payoffCents = (it * debt.amountCents).toLong() },
@@ -307,11 +321,11 @@ fun PersonDetailScreen(
                                 // ── Progress bar visual ──────────────────────
                                 val progress = if (debt.amountCents > 0)
                                     payoffCents.toFloat() / debt.amountCents.toFloat() else 0f
-                                androidx.compose.material3.LinearProgressIndicator(
+                                // M3 Expressive: wavy while paying down (standard bar on reduced motion)
+                                ExpressiveLinearProgress(
                                     progress = { progress.coerceIn(0f, 1f) },
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(8.dp)
                                         .padding(top = MoneySpacing.xxs),
                                     color = MaterialTheme.colorScheme.tertiary,
                                     trackColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -555,7 +569,7 @@ private fun ProfileHeader(
         )
 
         Text(
-            text = "${if (netCents < 0) "-" else ""}" +
+            text = (if (netCents < 0) "-" else "") +
                     "${abs(netCents) / 100}." +
                     "${(abs(netCents) % 100).toString().padStart(2, '0')}$currencySymbol",
             style = MaterialTheme.typography.displayMedium,

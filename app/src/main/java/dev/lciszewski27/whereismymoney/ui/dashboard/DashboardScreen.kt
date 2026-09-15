@@ -1,8 +1,10 @@
 package dev.lciszewski27.whereismymoney.ui.dashboard
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -12,6 +14,7 @@ import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
@@ -65,6 +69,7 @@ import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ripple
 import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -120,6 +125,10 @@ fun DashboardScreen(
     )
     var showNewPersonDialog by remember { mutableStateOf(false) }
     var isDrawerExpanded by remember { mutableStateOf(false) }
+
+    // System back collapses the open drawer instead of leaving the screen.
+    // Drag, header tap, and outside-tap (scrim) keep working as before.
+    BackHandler(enabled = isDrawerExpanded) { isDrawerExpanded = false }
 
     // ── New Person Dialog ────────────────────────────────────────────
     if (showNewPersonDialog) {
@@ -182,15 +191,33 @@ fun DashboardScreen(
                 else Modifier
             ),
         topBar = {
-            DashboardTopAppBar(
-                searchQuery = uiState.searchQuery,
-                onSearchQueryChange = { onEvent(DashboardUiEvent.Search(it)) },
-                onClearSearch = { onEvent(DashboardUiEvent.ClearSearch) },
-                onOpenSettings = { onEvent(DashboardUiEvent.OpenSettings) },
-                onOpenStats = { onEvent(DashboardUiEvent.OpenStats) },
-                scrollBehavior = scrollBehavior,
-                isDrawerExpanded = isDrawerExpanded
-            )
+            Box {
+                DashboardTopAppBar(
+                    searchQuery = uiState.searchQuery,
+                    onSearchQueryChange = { onEvent(DashboardUiEvent.Search(it)) },
+                    onClearSearch = { onEvent(DashboardUiEvent.ClearSearch) },
+                    onOpenSettings = { onEvent(DashboardUiEvent.OpenSettings) },
+                    onOpenStats = { onEvent(DashboardUiEvent.OpenStats) },
+                    scrollBehavior = scrollBehavior,
+                    isDrawerExpanded = isDrawerExpanded,
+                    onCloseDrawer = { isDrawerExpanded = false }
+                )
+                // Same dim as the content scrim while the drawer is open.
+                // No click handling here on purpose: taps fall through to
+                // the bar's own tap-to-close.
+                AnimatedVisibility(
+                    visible = isDrawerExpanded,
+                    enter = if (animationsEnabled) fadeIn() else EnterTransition.None,
+                    exit = if (animationsEnabled) fadeOut() else ExitTransition.None,
+                    modifier = Modifier.matchParentSize()
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(Color.Black.copy(alpha = 0.4f))
+                    )
+                }
+            }
         },
         floatingActionButton = {
             AnimatedVisibility(
@@ -198,10 +225,20 @@ fun DashboardScreen(
                 enter = if (animationsEnabled) fadeIn() else EnterTransition.None,
                 exit = if (animationsEnabled) fadeOut() else ExitTransition.None
             ) {
+                // M3 Expressive: the FAB squishes its corners while pressed.
+                val fabInteractionSource = remember { MutableInteractionSource() }
+                val fabPressed by fabInteractionSource.collectIsPressedAsState()
+                val fabCorner by animateDpAsState(
+                    targetValue = if (fabPressed && animationsEnabled) MoneySpacing.xs
+                    else MoneySpacing.md,
+                    animationSpec = spring(dampingRatio = 0.6f, stiffness = 500f),
+                    label = "fab_corner",
+                )
                 FloatingActionButton(
                     onClick = { showNewPersonDialog = true },
                     modifier = Modifier.padding(bottom = 120.dp),
-                    shape = MaterialTheme.shapes.large,
+                    shape = RoundedCornerShape(fabCorner),
+                    interactionSource = fabInteractionSource,
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
                     elevation = FloatingActionButtonDefaults.bottomAppBarFabElevation()
@@ -340,7 +377,8 @@ private fun DashboardTopAppBar(
     onOpenSettings: () -> Unit,
     onOpenStats: () -> Unit,
     scrollBehavior: androidx.compose.material3.TopAppBarScrollBehavior,
-    isDrawerExpanded: Boolean
+    isDrawerExpanded: Boolean,
+    onCloseDrawer: () -> Unit = {}
 ) {
     var isSearchActive by remember { mutableStateOf(false) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -357,9 +395,20 @@ private fun DashboardTopAppBar(
         onSearchQueryChange(textFieldState.text.toString())
     }
 
+    // The top bar sits above the scrim, so while the drawer is open a tap
+    // anywhere on the bar (e.g. the big title) collapses the drawer.
+    val barTapSource = remember { MutableInteractionSource() }
+    val barTapModifier = Modifier.clickable(
+        enabled = isDrawerExpanded,
+        interactionSource = barTapSource,
+        indication = null,
+        onClick = onCloseDrawer,
+    )
+
     if (isSearchActive) {
         // ── Search mode: show a compact TopAppBar with the SearchBar inside ──
         TopAppBar(
+            modifier = barTapModifier,
             title = {
                 SearchBar(
                     state = searchBarState,
@@ -409,6 +458,7 @@ private fun DashboardTopAppBar(
     } else {
         // ── Normal mode: LargeTopAppBar with title and action icons ──
         LargeTopAppBar(
+            modifier = barTapModifier,
             title = {
                 Column {
                     Text(
@@ -455,10 +505,11 @@ private fun DebtFilterChips(
     onSelect: (DebtFilterType) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Note: no horizontal padding here — the caller already supplies it.
+    // Tight inner padding so icon + label always fit on one line.
+    val chipContentPadding = PaddingValues(horizontal = MoneySpacing.xxs)
     FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         // 1. ALL
@@ -473,9 +524,11 @@ private fun DebtFilterChips(
                 if (checked) onSelect(DebtFilterType.ALL)
             },
             shapes = ButtonGroupDefaults.connectedLeadingButtonShapes(),
+            contentPadding = chipContentPadding,
         ) {
             Text(
-                text = "All"
+                text = "All",
+                maxLines = 1
             )
         }
 
@@ -490,12 +543,14 @@ private fun DebtFilterChips(
             onCheckedChange = { checked ->
                 if (checked) onSelect(DebtFilterType.THEY_OWE_ME)
             },
-            shapes = ButtonGroupDefaults.connectedMiddleButtonShapes()
+            shapes = ButtonGroupDefaults.connectedMiddleButtonShapes(),
+            contentPadding = chipContentPadding,
         ) {
             Icon(Icons.Outlined.ArrowDownward, null, Modifier.size(18.dp))
             Spacer(modifier = Modifier.size(ToggleButtonDefaults.IconSpacing))
             Text(
-                text = "They Owe"
+                text = "They Owe",
+                maxLines = 1
             )
         }
 
@@ -510,12 +565,14 @@ private fun DebtFilterChips(
             onCheckedChange = { checked ->
                 if (checked) onSelect(DebtFilterType.I_OWE_THEM)
             },
-            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes()
+            shapes = ButtonGroupDefaults.connectedTrailingButtonShapes(),
+            contentPadding = chipContentPadding,
         ) {
             Icon(Icons.Outlined.ArrowUpward, null, Modifier.size(18.dp))
             Spacer(modifier = Modifier.size(ToggleButtonDefaults.IconSpacing))
             Text(
-                text = "I Owe"
+                text = "I Owe",
+                maxLines = 1
             )
         }
     }
@@ -622,11 +679,26 @@ private fun PersonCard(
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
+    // M3 Expressive: the card eases to a tighter corner while pressed.
+    val animationsEnabled = LocalAnimationsEnabled.current
+    val cardInteractionSource = remember { MutableInteractionSource() }
+    val cardPressed by cardInteractionSource.collectIsPressedAsState()
+    val cardCorner by animateDpAsState(
+        targetValue = if (cardPressed && animationsEnabled) MoneySpacing.sm
+        else MoneySpacing.md,
+        animationSpec = spring(dampingRatio = 0.7f, stiffness = 500f),
+        label = "card_corner",
+    )
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.large,
+            .clickable(
+                interactionSource = cardInteractionSource,
+                indication = ripple(),
+                onClick = onClick,
+            ),
+        shape = RoundedCornerShape(cardCorner),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow
         ),

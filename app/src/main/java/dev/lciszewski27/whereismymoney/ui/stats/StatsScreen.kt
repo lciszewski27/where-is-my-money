@@ -22,7 +22,8 @@ import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.CircularProgressIndicator
+import dev.lciszewski27.whereismymoney.ui.components.ExpressiveLinearProgress
+import dev.lciszewski27.whereismymoney.ui.components.ExpressiveLoadingIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -55,8 +56,8 @@ import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StatsScreen(
-    onNavigateBack: () -> Unit = {},
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onNavigateBack: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val app = context.applicationContext as WhereIsMyMoneyApp
@@ -102,7 +103,7 @@ fun StatsScreen(
                     .padding(innerPadding),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator()
+                ExpressiveLoadingIndicator()
             }
         } else {
             StatsScreenContent(
@@ -207,7 +208,6 @@ private fun StatsScreenContent(
                 } else {
                     DebtTrendChart(
                         trends = stats.monthlyTrends,
-                        primaryCurrency = stats.primaryCurrency,
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
@@ -265,9 +265,9 @@ private fun StatsScreenContent(
                         Spacer(Modifier.width(MoneySpacing.sm))
                         Text("Active", modifier = Modifier.width(80.dp),
                             style = MaterialTheme.typography.bodyMedium)
-                        androidx.compose.material3.LinearProgressIndicator(
+                        ExpressiveLinearProgress(
                             progress = { activeRatio },
-                            modifier = Modifier.weight(1f).height(8.dp),
+                            modifier = Modifier.weight(1f),
                             color = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant,
                         )
@@ -295,9 +295,9 @@ private fun StatsScreenContent(
                         Spacer(Modifier.width(MoneySpacing.sm))
                         Text("Settled", modifier = Modifier.width(80.dp),
                             style = MaterialTheme.typography.bodyMedium)
-                        androidx.compose.material3.LinearProgressIndicator(
+                        ExpressiveLinearProgress(
                             progress = { settledRatio },
-                            modifier = Modifier.weight(1f).height(8.dp),
+                            modifier = Modifier.weight(1f),
                             color = MaterialTheme.colorScheme.tertiary,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant,
                         )
@@ -371,7 +371,6 @@ private fun StatCard(
 @Composable
 private fun DebtTrendChart(
     trends: List<StatsMonthlyTrend>,
-    primaryCurrency: String,
     modifier: Modifier = Modifier
 ) {
     val primary = MaterialTheme.colorScheme.primary

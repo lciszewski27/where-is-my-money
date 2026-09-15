@@ -26,7 +26,8 @@ class UserPreferencesDataStore(private val context: Context) {
     private object Keys {
         val PRIMARY_CURRENCY = stringPreferencesKey("primary_currency")
         val DYNAMIC_COLOR_ENABLED = booleanPreferencesKey("dynamic_color_enabled")
-        val DARK_THEME_ENABLED = stringPreferencesKey("dark_theme_enabled") // "auto" | "light" | "dark"
+        val DARK_THEME_ENABLED =
+            stringPreferencesKey("dark_theme_enabled") // "auto" | "light" | "dark"
         val AMOLED_MODE_ENABLED = booleanPreferencesKey("amoled_mode_enabled")
         val ANIMATIONS_ENABLED = booleanPreferencesKey("animations_enabled")
         val COLOR_PRESET = stringPreferencesKey("color_preset")
@@ -34,7 +35,7 @@ class UserPreferencesDataStore(private val context: Context) {
     }
 
     val primaryCurrency: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[Keys.PRIMARY_CURRENCY] ?: "PLN"
+        prefs[Keys.PRIMARY_CURRENCY] ?: defaultCurrencyCode()
     }
 
     val dynamicColorEnabled: Flow<Boolean> = context.dataStore.data.map { prefs ->
@@ -100,6 +101,28 @@ class UserPreferencesDataStore(private val context: Context) {
     suspend fun setAppFont(font: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.APP_FONT] = font
+        }
+    }
+
+    companion object {
+        /** Used when the system locale has no usable currency. */
+        const val FALLBACK_CURRENCY_CODE = "USD"
+
+        /**
+         * Default currency derived from the system locale (e.g. EUR on a
+         * German device), falling back to USD when the locale has no
+         * currency (e.g. no country is set).
+         * Only applies until the user picks a currency themselves.
+         */
+        fun defaultCurrencyCode(): String {
+            return try {
+                java.util.Currency.getInstance(java.util.Locale.getDefault())
+                    ?.currencyCode
+                    ?.takeIf { it.isNotBlank() }
+                    ?: FALLBACK_CURRENCY_CODE
+            } catch (e: Exception) {
+                FALLBACK_CURRENCY_CODE
+            }
         }
     }
 }
