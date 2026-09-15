@@ -6,6 +6,12 @@
       "sourceType": "github",
       "skillPath": "skills/material-3/SKILL.md",
       "computedHash": "72d56347fae33c9b1763e16d0bffb781da382aa3be316b9252dcd35fd050c6bc"
+    },
+    "material-design-3": {
+      "source": "gdlbo/material-skill",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "bdad20e25c8be9ff1d20da210e86a2aa0302bae05126c8ae2a489f9cf6ee0053"
     }
   }
 }

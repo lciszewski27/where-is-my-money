@@ -1,0 +1,4 @@
+interface:
+  display_name: "Material Design 3"
+  short_description: "Design Android and web UIs with Material 3"
+  default_prompt: "Use $material-design-3 to design or review this interface with platform-appropriate Material 3 guidance"

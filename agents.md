@@ -234,6 +234,12 @@ Key dependencies: Room (KSP), Navigation Compose, DataStore Preferences, Kotlinx
 
 ---
 
+## Testing
+
+- You can run `./gradlew buildAndroid` to build project
+
+---
+
 ## Notes for Agents
 
 - **Do not** add Dagger/Hilt or Koin unless explicitly requested — the manual DI is intentional for traceability.
