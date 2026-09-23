@@ -10,9 +10,9 @@
 Track who owes you, who you owe, and see the big picture — all stored locally on your device.
 No accounts, no sync, no analytics.
 
-| Dashboard | Add Debt | Details | Settings |
+| Dashboard | Add Debt | Details | Statistics |
 | :---: | :---: | :---: | :---: |
-| <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/dashboard.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/add_debt.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/details.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/settings.png" width="200"/> |
+| <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/dashboard.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/add_debt.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/details.png" width="200"/> | <img src="https://raw.githubusercontent.com/lciszewski27/where-is-my-money/refs/heads/main/assets/stats.png" width="200"/> |
 
 ---
 
