@@ -36,7 +36,6 @@ class UserPreferencesDataStore(private val context: Context) {
         val DEFAULT_CATEGORY_ID = stringPreferencesKey("default_category_id") // "" = none
         val PERSON_SORT_ORDER = stringPreferencesKey("person_sort_order") // "name"|"balance"|"recent"
         val CONFIRM_BEFORE_SETTLE = booleanPreferencesKey("confirm_before_settle")
-        val START_SCREEN = stringPreferencesKey("start_screen") // "dashboard" | "stats"
     }
 
     val primaryCurrency: Flow<String> = context.dataStore.data.map { prefs ->
@@ -81,10 +80,6 @@ class UserPreferencesDataStore(private val context: Context) {
 
     val confirmBeforeSettle: Flow<Boolean> = context.dataStore.data.map { prefs ->
         prefs[Keys.CONFIRM_BEFORE_SETTLE] ?: true
-    }
-
-    val startScreen: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[Keys.START_SCREEN] ?: "dashboard"
     }
 
     suspend fun setPrimaryCurrency(code: String) {
@@ -150,12 +145,6 @@ class UserPreferencesDataStore(private val context: Context) {
     suspend fun setConfirmBeforeSettle(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[Keys.CONFIRM_BEFORE_SETTLE] = enabled
-        }
-    }
-
-    suspend fun setStartScreen(screen: String) {
-        context.dataStore.edit { prefs ->
-            prefs[Keys.START_SCREEN] = screen
         }
     }
 

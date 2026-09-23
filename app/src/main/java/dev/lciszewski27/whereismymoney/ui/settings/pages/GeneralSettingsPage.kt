@@ -23,7 +23,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
-import dev.lciszewski27.whereismymoney.ui.settings.AppStartScreen
 import dev.lciszewski27.whereismymoney.ui.settings.PersonSortOrder
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsUiEvent
 import dev.lciszewski27.whereismymoney.ui.settings.SettingsUiState
@@ -170,7 +169,7 @@ internal fun GeneralSettingsPage(
         )
 
         Text(
-            "Lists & Navigation",
+            "Lists",
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.SemiBold,
@@ -179,7 +178,7 @@ internal fun GeneralSettingsPage(
 
         // ── Person sort order ─────────────────────────────────────
         SegmentedListItem(
-            shapes = ListItemDefaults.segmentedShapes(index = 0, count = 2),
+            shapes = ListItemDefaults.segmentedShapes(index = 0, count = 1),
             colors = ListItemDefaults.colors(
                 containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
             ),
@@ -214,55 +213,6 @@ internal fun GeneralSettingsPage(
                                         Text(
                                             text = order.displayName,
                                             fontWeight = if (uiState.personSortOrder == order) {
-                                                FontWeight.Bold
-                                            } else FontWeight.Normal
-                                        )
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        )
-
-        // ── Start screen ──────────────────────────────────────────
-        SegmentedListItem(
-            shapes = ListItemDefaults.segmentedShapes(index = 1, count = 2),
-            colors = ListItemDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-            ),
-            leadingContent = { Text("Start screen") },
-            content = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { onEvent(SettingsUiEvent.ToggleStartScreenDropdown) },
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Spacer(modifier = Modifier.weight(1f))
-                    Box {
-                        Text(
-                            text = uiState.startScreen.displayName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            fontWeight = FontWeight.Bold
-                        )
-                        DropdownMenu(
-                            expanded = uiState.isStartScreenDropdownExpanded,
-                            onDismissRequest = { onEvent(SettingsUiEvent.DismissStartScreenDropdown) }
-                        ) {
-                            AppStartScreen.entries.forEach { screen ->
-                                DropdownMenuItem(
-                                    onClick = {
-                                        onEvent(SettingsUiEvent.SetStartScreen(screen))
-                                        onEvent(SettingsUiEvent.DismissStartScreenDropdown)
-                                    },
-                                    text = {
-                                        Text(
-                                            text = screen.displayName,
-                                            fontWeight = if (uiState.startScreen == screen) {
                                                 FontWeight.Bold
                                             } else FontWeight.Normal
                                         )

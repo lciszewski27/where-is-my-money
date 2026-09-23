@@ -51,7 +51,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
-    startDestination: Route = Route.Dashboard,
     navController: NavHostController = rememberNavController()
 ) {
     val context = LocalContext.current
@@ -184,7 +183,7 @@ fun AppNavHost(
     // ── Navigation Host ──────────────────────────────────────────────
     NavHost(
         navController = navController,
-        startDestination = startDestination,
+        startDestination = Route.Dashboard,
         modifier = modifier.fillMaxSize(),
         enterTransition = {
             if (animationsEnabled) {

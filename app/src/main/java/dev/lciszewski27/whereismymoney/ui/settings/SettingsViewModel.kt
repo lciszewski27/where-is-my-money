@@ -49,7 +49,6 @@ class SettingsViewModel(
             val categories = repository.getCategories()
             val sortOrder = PersonSortOrder.fromValue(preferences.personSortOrder.first())
             val confirmSettle = preferences.confirmBeforeSettle.first()
-            val startScreen = AppStartScreen.fromValue(preferences.startScreen.first())
 
             val mode = when (theme) {
                 "light" -> ThemeMode.LIGHT
@@ -71,7 +70,6 @@ class SettingsViewModel(
                     categories = categories,
                     personSortOrder = sortOrder,
                     confirmBeforeSettle = confirmSettle,
-                    startScreen = startScreen,
                     exchangeRates = repository.getExchangeRates()
                 )
             }
@@ -222,21 +220,6 @@ class SettingsViewModel(
                     preferences.setConfirmBeforeSettle(event.enabled)
                     _uiState.update { it.copy(confirmBeforeSettle = event.enabled) }
                 }
-            }
-
-            is SettingsUiEvent.SetStartScreen -> {
-                viewModelScope.launch {
-                    preferences.setStartScreen(event.screen.value)
-                    _uiState.update { it.copy(startScreen = event.screen) }
-                }
-            }
-
-            is SettingsUiEvent.ToggleStartScreenDropdown -> {
-                _uiState.update { it.copy(isStartScreenDropdownExpanded = !it.isStartScreenDropdownExpanded) }
-            }
-
-            is SettingsUiEvent.DismissStartScreenDropdown -> {
-                _uiState.update { it.copy(isStartScreenDropdownExpanded = false) }
             }
         }
     }
