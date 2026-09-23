@@ -76,7 +76,8 @@ internal fun CategoriesSettingsPage() {
     }
 
     // ── Delete confirmation dialog ───────────────────────────────────
-    if (categoryToDelete != null) {
+    val pendingDelete = categoryToDelete
+    if (pendingDelete != null) {
         AlertDialog(
             onDismissRequest = { categoryToDelete = null },
             title = {
@@ -88,7 +89,7 @@ internal fun CategoriesSettingsPage() {
             },
             text = {
                 Text(
-                    "Are you sure you want to delete \"${categoryToDelete!!.name}\"? " +
+                    "Are you sure you want to delete \"${pendingDelete.name}\"? " +
                             "Existing debts with this category will not be affected.",
                     style = MaterialTheme.typography.bodyMedium
                 )
@@ -97,7 +98,7 @@ internal fun CategoriesSettingsPage() {
                 TextButton(
                     onClick = {
                         scope.launch {
-                            repository.deleteCategory(categoryToDelete!!.id)
+                            repository.deleteCategory(pendingDelete.id)
                             categoryToDelete = null
                         }
                     }

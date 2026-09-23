@@ -222,7 +222,10 @@ class DebtRepositoryImpl(
         val monthlyMap = mutableMapOf<String, MutableList<Debt>>()
         for (debt in allDebts) {
             val cal = java.util.Calendar.getInstance().apply { timeInMillis = debt.timestamp }
-            val key = "${cal.get(java.util.Calendar.YEAR)}-${cal.get(java.util.Calendar.MONTH) + 1}"
+            val key = "%04d-%02d".format(
+                cal.get(java.util.Calendar.YEAR),
+                cal.get(java.util.Calendar.MONTH) + 1
+            )
             monthlyMap.getOrPut(key) { mutableListOf() }.add(debt)
         }
 

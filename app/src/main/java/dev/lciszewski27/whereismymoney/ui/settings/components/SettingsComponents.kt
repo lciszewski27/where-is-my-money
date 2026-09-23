@@ -221,13 +221,16 @@ internal fun AddExchangeRateRow(onAdd: (from: String, to: String, rate: Double) 
         FilledTonalButton(
             onClick = {
                 val rate = rateText.toDoubleOrNull()
-                if (rate != null && rate > 0) {
+                if (rate != null && rate > 0 && rate.isFinite() && fromCurrency != toCurrency) {
                     onAdd(fromCurrency, toCurrency, rate); rateText = ""
                 }
             },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium,
-            enabled = rateText.toDoubleOrNull() != null
+            enabled = run {
+                val rate = rateText.toDoubleOrNull()
+                rate != null && rate > 0 && rate.isFinite() && fromCurrency != toCurrency
+            }
         ) {
             Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(4.dp))

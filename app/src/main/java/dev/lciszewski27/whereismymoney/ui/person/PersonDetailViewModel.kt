@@ -117,10 +117,7 @@ class PersonDetailViewModel(
                         val remainingDebt = debt.copy(
                             id = java.util.UUID.randomUUID().toString(),
                             amountCents = debt.amountCents - event.amountCents,
-                            description = debt.description.ifBlank {
-                                if (debt.type == dev.lciszewski27.whereismymoney.domain.model.DebtType.THEY_OWE_ME)
-                                    "Remaining" else "Remaining"
-                            },
+                            description = debt.description.ifBlank { "Remaining" },
                             timestamp = System.currentTimeMillis(),
                             isSettled = false
                         )

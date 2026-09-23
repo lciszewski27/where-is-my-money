@@ -7,6 +7,7 @@ import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
+import dev.lciszewski27.whereismymoney.domain.util.MoneyInput
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -83,7 +84,7 @@ class AddDebtViewModel(
                 editDebtId = debt.id,
                 selectedPersonId = debt.personId,
                 amountCents = debt.amountCents,
-                amountText = formatCentsForInput(debt.amountCents),
+                amountText = MoneyInput.formatCentsForInput(debt.amountCents),
                 currency = debt.currency,
                 debtType = debt.type,
                 description = debt.description,
@@ -105,7 +106,7 @@ class AddDebtViewModel(
                 val cleaned = event.text.filter { c -> c.isDigit() || c == ',' || c == '.' }
                 _uiState.update { it.copy(amountText = cleaned) }
                 // Parse to cents
-                val cents = parseInputToCents(cleaned)
+                val cents = MoneyInput.parseInputToCents(cleaned)
                 _uiState.update { it.copy(amountCents = cents) }
             }
             is AddDebtUiEvent.CurrencyChanged -> {
@@ -175,25 +176,5 @@ class AddDebtViewModel(
 
             _dismiss.emit(Unit)
         }
-    }
-
-    private fun parseInputToCents(input: String): Long {
-        val normalized = input.replace(',', '.')
-        val parts = normalized.split(".")
-        return when {
-            parts.size == 1 -> (normalized.toLongOrNull() ?: 0L) * 100
-            parts.size == 2 -> {
-                val major = parts[0].toLongOrNull() ?: 0L
-                val minor = parts[1].take(2).padEnd(2, '0').toLongOrNull() ?: 0L
-                major * 100 + minor
-            }
-            else -> 0L
-        }
-    }
-
-    private fun formatCentsForInput(cents: Long): String {
-        val major = cents / 100
-        val minor = cents % 100
-        return "$major.${minor.toString().padStart(2, '0')}"
     }
 }

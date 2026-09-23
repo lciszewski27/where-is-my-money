@@ -77,6 +77,7 @@ import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
+import dev.lciszewski27.whereismymoney.domain.util.MoneyInput
 import dev.lciszewski27.whereismymoney.ui.components.ExpressiveLinearProgress
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
@@ -160,7 +161,7 @@ fun PersonDetailScreen(
             var amountText by remember { mutableStateOf("") }
 
             LaunchedEffect(payoffCents) {
-                if (parseInputToCents(amountText) != payoffCents) {
+                if (MoneyInput.parseInputToCents(amountText) != payoffCents) {
                     amountText = if (payoffCents == 0L) "" else (payoffCents / 100.0).toString()
                 }
             }
@@ -269,7 +270,7 @@ fun PersonDetailScreen(
                             onValueChange = {
                                 amountText = it.filter { c -> c.isDigit() || c == '.' || c == ',' }
                                 payoffCents =
-                                    parseInputToCents(amountText).coerceIn(0, debt.amountCents)
+                                    MoneyInput.parseInputToCents(amountText).coerceIn(0, debt.amountCents)
                             },
                             label = { Text("Amount paid") },
                             placeholder = { Text("0.00") },
@@ -742,21 +743,6 @@ private fun EmptyDebtsPlaceholder() {
 private fun formatTimestamp(epoch: Long): String {
     val fmt = SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
     return fmt.format(Date(epoch))
-}
-
-private fun parseInputToCents(input: String): Long {
-    val normalized = input.replace(',', '.')
-    val parts = normalized.split(".")
-    return when {
-        parts.size == 1 -> (normalized.toLongOrNull() ?: 0L) * 100
-        parts.size == 2 -> {
-            val major = parts[0].toLongOrNull() ?: 0L
-            val minor = parts[1].take(2).padEnd(2, '0').toLongOrNull() ?: 0L
-            major * 100 + minor
-        }
-
-        else -> 0L
-    }
 }
 
 @Preview(showBackground = true)

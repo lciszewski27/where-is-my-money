@@ -2,6 +2,7 @@ package dev.lciszewski27.whereismymoney.domain.usecase
 
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.ExchangeRate
+import kotlin.math.roundToLong
 
 /**
  * Pure computation engine for currency conversions.
@@ -19,7 +20,7 @@ class CurrencyConversionUseCase {
     fun convert(cents: Long, fromCurrency: String, toCurrency: String): Long {
         if (fromCurrency == toCurrency) return cents
         val rate = findRate(fromCurrency, toCurrency) ?: 1.0
-        return (cents * rate).toLong()
+        return (cents * rate).roundToLong()
     }
 
     /**
@@ -27,11 +28,16 @@ class CurrencyConversionUseCase {
      */
     fun findRate(from: String, to: String): Double? {
         rates.firstOrNull { it.fromCurrency == from && it.toCurrency == to }?.let { return it.rate }
-        rates.firstOrNull { it.fromCurrency == to && it.toCurrency == from }?.let { return 1.0 / it.rate }
+        rates.firstOrNull { it.fromCurrency == to && it.toCurrency == from }?.let {
+            if (it.rate == 0.0) return null
+            return 1.0 / it.rate
+        }
         return null
     }
 
     fun setRate(from: String, to: String, rate: Double) {
+        if (from == to) return
+        if (!rate.isFinite() || rate <= 0.0) return
         rates.removeAll { it.fromCurrency == from && it.toCurrency == to }
         rates.add(ExchangeRate(from, to, rate))
     }
