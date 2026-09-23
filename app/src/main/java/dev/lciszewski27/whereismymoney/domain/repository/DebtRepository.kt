@@ -4,6 +4,8 @@ import dev.lciszewski27.whereismymoney.domain.model.Category
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
+import dev.lciszewski27.whereismymoney.domain.model.ExchangeRate
+import dev.lciszewski27.whereismymoney.domain.model.Payment
 import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.domain.model.StatsMonthlyTrend
 import dev.lciszewski27.whereismymoney.domain.model.StatsSummary
@@ -47,6 +49,19 @@ interface DebtRepository {
 
     fun observeDashboardSummary(primaryCurrency: String): Flow<DashboardSummary>
     suspend fun getActiveCurrencies(): List<String>
+
+    // ── Payments (audit ledger) ────────────────────────────────────────
+
+    suspend fun recordPayment(payment: Payment)
+    fun observePaymentsForPerson(personId: String): Flow<List<Payment>>
+    fun observePaymentsForDebt(debtId: String): Flow<List<Payment>>
+
+    // ── Exchange rates (persisted) ─────────────────────────────────────
+
+    fun observeExchangeRates(): Flow<List<ExchangeRate>>
+    suspend fun getExchangeRates(): List<ExchangeRate>
+    suspend fun setExchangeRate(from: String, to: String, rate: Double)
+    suspend fun removeExchangeRate(from: String, to: String)
 
     // ── Stats ────────────────────────────────────────────────────────
 

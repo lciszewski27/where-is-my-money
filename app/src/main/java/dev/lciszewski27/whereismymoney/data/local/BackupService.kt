@@ -4,9 +4,13 @@ import android.content.Context
 import android.net.Uri
 import dev.lciszewski27.whereismymoney.data.local.dao.CategoryDao
 import dev.lciszewski27.whereismymoney.data.local.dao.DebtDao
+import dev.lciszewski27.whereismymoney.data.local.dao.ExchangeRateDao
+import dev.lciszewski27.whereismymoney.data.local.dao.PaymentDao
 import dev.lciszewski27.whereismymoney.data.local.dao.PersonDao
 import dev.lciszewski27.whereismymoney.data.local.entity.CategoryEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.DebtEntity
+import dev.lciszewski27.whereismymoney.data.local.entity.ExchangeRateEntity
+import dev.lciszewski27.whereismymoney.data.local.entity.PaymentEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.PersonEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,13 +25,17 @@ import kotlinx.serialization.json.Json
 data class BackupData(
     val persons: List<PersonEntity>,
     val debts: List<DebtEntity>,
-    val categories: List<CategoryEntity> = emptyList()
+    val categories: List<CategoryEntity> = emptyList(),
+    val payments: List<PaymentEntity> = emptyList(),
+    val exchangeRates: List<ExchangeRateEntity> = emptyList()
 )
 
 class BackupService(
     private val personDao: PersonDao,
     private val debtDao: DebtDao,
-    private val categoryDao: CategoryDao
+    private val categoryDao: CategoryDao,
+    private val paymentDao: PaymentDao,
+    private val exchangeRateDao: ExchangeRateDao
 ) {
     private val json = Json { prettyPrint = true; ignoreUnknownKeys = true }
 
@@ -35,7 +43,9 @@ class BackupService(
         val persons = personDao.getAll()
         val debts = debtDao.getAll()
         val categories = categoryDao.getAll()
-        json.encodeToString(BackupData(persons, debts, categories))
+        val payments = paymentDao.getAll()
+        val exchangeRates = exchangeRateDao.getAll()
+        json.encodeToString(BackupData(persons, debts, categories, payments, exchangeRates))
     }
 
     suspend fun importFromJson(jsonString: String): Int = withContext(Dispatchers.IO) {
@@ -51,6 +61,15 @@ class BackupService(
         }
         for (category in backup.categories) {
             categoryDao.insert(category)
+            count++
+        }
+        // Payments reference debts/persons, so they must come after.
+        for (payment in backup.payments) {
+            paymentDao.insert(payment)
+            count++
+        }
+        for (rate in backup.exchangeRates) {
+            exchangeRateDao.upsert(rate)
             count++
         }
         count

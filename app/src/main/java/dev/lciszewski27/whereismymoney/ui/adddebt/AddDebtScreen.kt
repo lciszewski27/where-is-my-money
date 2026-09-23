@@ -1,11 +1,13 @@
 package dev.lciszewski27.whereismymoney.ui.adddebt
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.outlined.ArrowDownward
 import androidx.compose.material.icons.outlined.ArrowUpward
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
@@ -43,6 +46,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
@@ -53,13 +57,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
+import dev.lciszewski27.whereismymoney.domain.util.MoneyInput
+import dev.lciszewski27.whereismymoney.domain.util.SplitCalculator
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
@@ -154,7 +163,12 @@ fun AddDebtSheetContent(
         }
 
         // ── Contact Selector ──────────────────────────────────────────
-        if (uiState.selectedPersonId != null) {
+        if (uiState.splitMode) {
+            SplitPersonSelector(
+                uiState = uiState,
+                onEvent = onEvent
+            )
+        } else if (uiState.selectedPersonId != null) {
             val person = uiState.persons.firstOrNull { it.id == uiState.selectedPersonId }
             if (person != null) {
                 Text(
@@ -226,6 +240,32 @@ fun AddDebtSheetContent(
                         }
                     }
                 }
+            }
+        }
+
+        // ── Group split toggle (new debts only) ────────────────────
+        if (!uiState.isEditing) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Split between people",
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Text(
+                        text = "Divide the total equally across everyone selected",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = uiState.splitMode,
+                    onCheckedChange = { onEvent(AddDebtUiEvent.ToggleSplitMode) }
+                )
             }
         }
 
@@ -376,22 +416,108 @@ fun AddDebtSheetContent(
         Spacer(Modifier.height(MoneySpacing.xs))
 
         // ── Save Button (M3 Expressive: morphs shape on press) ───
+        val canSave = uiState.amountCents > 0 && if (uiState.splitMode) {
+            uiState.splitPersonIds.isNotEmpty()
+        } else {
+            uiState.selectedPersonId != null || uiState.newPersonName.isNotBlank()
+        }
         Button(
             onClick = { onEvent(AddDebtUiEvent.SaveDebt) },
             shapes = ButtonDefaults.shapes(),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
-            enabled = (uiState.selectedPersonId != null || uiState.newPersonName.isNotBlank()) &&
-                    uiState.amountCents > 0
+            enabled = canSave
         ) {
             Icon(Icons.Filled.Save, contentDescription = null)
             Spacer(Modifier.width(MoneySpacing.xs))
             Text(
-                text = if (uiState.isEditing) "Update Debt" else "Save Debt",
+                text = when {
+                    uiState.isEditing -> "Update Debt"
+                    uiState.splitMode -> "Split between ${uiState.splitPersonIds.size}"
+                    else -> "Save Debt"
+                },
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
+        }
+    }
+}
+
+/**
+ * Multi-select person list for group expense splitting.
+ * Each row is a checkbox row showing the person's equal share preview.
+ * Quiet M3 list (no nested cards): selection is carried by the checkbox
+ * state plus a tonal share label, per the 1:3 containment budget.
+ */
+@Composable
+private fun SplitPersonSelector(
+    uiState: AddDebtUiState,
+    onEvent: (AddDebtUiEvent) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(MoneySpacing.xxs)
+    ) {
+        Text(
+            text = "Who shares this expense?",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary
+        )
+        if (uiState.persons.isEmpty()) {
+            Text(
+                text = "No people yet — close this sheet and add someone first.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            val shares = SplitCalculator.equalShares(uiState.amountCents, uiState.splitPersonIds.size)
+            val orderedIds = uiState.persons
+                .filter { it.id in uiState.splitPersonIds }
+                .map { it.id }
+            val shareById = orderedIds.zip(shares).toMap()
+            val currencySymbol = CurrencyInfo.fromCode(uiState.currency).symbol
+
+            uiState.persons.forEach { person ->
+                val checked = person.id in uiState.splitPersonIds
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable(
+                            role = Role.Checkbox,
+                            onClick = { onEvent(AddDebtUiEvent.ToggleSplitPerson(person.id)) }
+                        )
+                        .padding(horizontal = MoneySpacing.xs, vertical = MoneySpacing.xxs),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
+                ) {
+                    Checkbox(
+                        checked = checked,
+                        onCheckedChange = { onEvent(AddDebtUiEvent.ToggleSplitPerson(person.id)) }
+                    )
+                    PersonAvatar(person.name, person.colorSeed, size = 32.dp)
+                    Text(
+                        text = person.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (checked) {
+                        val share = shareById[person.id] ?: 0L
+                        Text(
+                            text = "${MoneyInput.formatCentsForInput(share)} $currencySymbol",
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
         }
     }
 }

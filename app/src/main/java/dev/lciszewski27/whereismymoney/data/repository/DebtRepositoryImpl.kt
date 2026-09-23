@@ -2,14 +2,21 @@ package dev.lciszewski27.whereismymoney.data.repository
 
 import dev.lciszewski27.whereismymoney.data.local.dao.CategoryDao
 import dev.lciszewski27.whereismymoney.data.local.dao.DebtDao
+import dev.lciszewski27.whereismymoney.data.local.dao.ExchangeRateDao
+import dev.lciszewski27.whereismymoney.data.local.dao.PaymentDao
 import dev.lciszewski27.whereismymoney.data.local.dao.PersonDao
 import dev.lciszewski27.whereismymoney.data.local.entity.CategoryEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.DebtEntity
+import dev.lciszewski27.whereismymoney.data.local.entity.ExchangeRateEntity
+import dev.lciszewski27.whereismymoney.data.local.entity.PaymentEntity
 import dev.lciszewski27.whereismymoney.data.local.entity.PersonEntity
 import dev.lciszewski27.whereismymoney.domain.model.Category
 import dev.lciszewski27.whereismymoney.domain.model.DashboardSummary
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
+import dev.lciszewski27.whereismymoney.domain.model.ExchangeRate
+import dev.lciszewski27.whereismymoney.domain.model.Payment
+import dev.lciszewski27.whereismymoney.domain.model.PaymentKind
 import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.domain.model.StatsMonthlyTrend
 import dev.lciszewski27.whereismymoney.domain.model.StatsSummary
@@ -23,6 +30,8 @@ class DebtRepositoryImpl(
     private val personDao: PersonDao,
     private val debtDao: DebtDao,
     private val categoryDao: CategoryDao,
+    private val paymentDao: PaymentDao,
+    private val exchangeRateDao: ExchangeRateDao,
     private val currencyConversion: CurrencyConversionUseCase
 ) : DebtRepository {
 
@@ -58,6 +67,22 @@ class DebtRepositoryImpl(
 
     private fun Category.toEntity(): CategoryEntity = CategoryEntity(
         id = id, name = name, colorSeed = colorSeed, createdAt = createdAt
+    )
+
+    private fun PaymentEntity.toDomain(): Payment = Payment(
+        id = id, debtId = debtId, personId = personId,
+        amountCents = amountCents, currency = currency,
+        timestamp = timestamp, kind = PaymentKind.fromDb(kind)
+    )
+
+    private fun Payment.toEntity(): PaymentEntity = PaymentEntity(
+        id = id, debtId = debtId, personId = personId,
+        amountCents = amountCents, currency = currency,
+        timestamp = timestamp, kind = kind.dbValue
+    )
+
+    private fun ExchangeRateEntity.toDomain(): ExchangeRate = ExchangeRate(
+        fromCurrency = fromCurrency, toCurrency = toCurrency, rate = rate
     )
 
     // ── Persons ──────────────────────────────────────────────────────
@@ -266,4 +291,43 @@ class DebtRepositoryImpl(
 
     override fun observeAllDebtsAscending(): Flow<List<Debt>> =
         debtDao.observeAllAscending().map { list -> list.map { it.toDomain() } }
+
+    // ── Payments (audit ledger) ────────────────────────────────────────
+
+    override suspend fun recordPayment(payment: Payment) =
+        paymentDao.insert(payment.toEntity())
+
+    override fun observePaymentsForPerson(personId: String): Flow<List<Payment>> =
+        paymentDao.observeForPerson(personId).map { list -> list.map { it.toDomain() } }
+
+    override fun observePaymentsForDebt(debtId: String): Flow<List<Payment>> =
+        paymentDao.observeForDebt(debtId).map { list -> list.map { it.toDomain() } }
+
+    // ── Exchange rates (persisted) ─────────────────────────────────────
+
+    override fun observeExchangeRates(): Flow<List<ExchangeRate>> =
+        exchangeRateDao.observeAll().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun getExchangeRates(): List<ExchangeRate> =
+        exchangeRateDao.getAll().map { it.toDomain() }
+
+    override suspend fun setExchangeRate(from: String, to: String, rate: Double) {
+        // Validate through the conversion engine, then persist.
+        currencyConversion.setRate(from, to, rate)
+        if (currencyConversion.findRate(from, to) == rate) {
+            exchangeRateDao.upsert(
+                ExchangeRateEntity(
+                    fromCurrency = from,
+                    toCurrency = to,
+                    rate = rate,
+                    updatedAt = System.currentTimeMillis()
+                )
+            )
+        }
+    }
+
+    override suspend fun removeExchangeRate(from: String, to: String) {
+        currencyConversion.removeRate(from, to)
+        exchangeRateDao.delete(from, to)
+    }
 }

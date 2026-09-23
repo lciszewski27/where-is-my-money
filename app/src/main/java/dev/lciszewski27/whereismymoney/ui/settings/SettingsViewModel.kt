@@ -3,6 +3,7 @@ package dev.lciszewski27.whereismymoney.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lciszewski27.whereismymoney.data.local.preferences.UserPreferencesDataStore
+import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
 import dev.lciszewski27.whereismymoney.domain.usecase.CurrencyConversionUseCase
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +14,8 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val preferences: UserPreferencesDataStore,
-    private val currencyConversion: CurrencyConversionUseCase
+    private val currencyConversion: CurrencyConversionUseCase,
+    private val repository: DebtRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -58,7 +60,7 @@ class SettingsViewModel(
                     animationsEnabled = animations,
                     colorPreset = preset,
                     appFont = font,
-                    exchangeRates = currencyConversion.getAllRates()
+                    exchangeRates = repository.getExchangeRates()
                 )
             }
         }
@@ -109,13 +111,19 @@ class SettingsViewModel(
             }
 
             is SettingsUiEvent.AddExchangeRate -> {
-                currencyConversion.setRate(event.from, event.to, event.rate)
-                _uiState.update { it.copy(exchangeRates = currencyConversion.getAllRates()) }
+                viewModelScope.launch {
+                    // Persists to Room; the app-level collector re-syncs the
+                    // in-memory conversion engine automatically.
+                    repository.setExchangeRate(event.from, event.to, event.rate)
+                    _uiState.update { it.copy(exchangeRates = repository.getExchangeRates()) }
+                }
             }
 
             is SettingsUiEvent.RemoveExchangeRate -> {
-                currencyConversion.removeRate(event.from, event.to)
-                _uiState.update { it.copy(exchangeRates = currencyConversion.getAllRates()) }
+                viewModelScope.launch {
+                    repository.removeExchangeRate(event.from, event.to)
+                    _uiState.update { it.copy(exchangeRates = repository.getExchangeRates()) }
+                }
             }
 
             is SettingsUiEvent.ExportBackup -> {}

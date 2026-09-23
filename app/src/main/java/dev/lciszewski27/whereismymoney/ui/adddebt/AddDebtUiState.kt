@@ -24,7 +24,11 @@ data class AddDebtUiState(
     val newPersonName: String = "",
     val showDatePicker: Boolean = false,
     val isEditing: Boolean = false,
-    val editDebtId: String? = null
+    val editDebtId: String? = null,
+    // ── Group split ──────────────────────────────────────────────
+    /** When true, the total is split equally across [splitPersonIds]. */
+    val splitMode: Boolean = false,
+    val splitPersonIds: Set<String> = emptySet()
 )
 
 /**
@@ -43,4 +47,6 @@ sealed interface AddDebtUiEvent {
     data class NewPersonNameChanged(val name: String) : AddDebtUiEvent
     data object SaveDebt : AddDebtUiEvent
     data object Dismiss : AddDebtUiEvent
+    data object ToggleSplitMode : AddDebtUiEvent
+    data class ToggleSplitPerson(val personId: String) : AddDebtUiEvent
 }

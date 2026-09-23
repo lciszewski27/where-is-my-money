@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import dev.lciszewski27.whereismymoney.data.local.preferences.UserPreferencesDataStore
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtItemWithPerson
+import dev.lciszewski27.whereismymoney.domain.model.Payment
+import dev.lciszewski27.whereismymoney.domain.model.PaymentKind
 import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
 import dev.lciszewski27.whereismymoney.domain.usecase.GetDashboardSummaryUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
@@ -144,7 +147,23 @@ class DashboardViewModel(
             }
             is DashboardUiEvent.SettlePerson -> {
                 viewModelScope.launch {
+                    val active = repository.observeDebtsForPerson(event.personId).first()
+                        .filter { !it.isSettled }
                     repository.settleAllForPerson(event.personId)
+                    val now = System.currentTimeMillis()
+                    for (debt in active) {
+                        repository.recordPayment(
+                            Payment(
+                                id = java.util.UUID.randomUUID().toString(),
+                                debtId = debt.id,
+                                personId = event.personId,
+                                amountCents = debt.amountCents,
+                                currency = debt.currency,
+                                timestamp = now,
+                                kind = PaymentKind.SETTLE_ALL
+                            )
+                        )
+                    }
                 }
             }
             is DashboardUiEvent.DeletePerson -> {

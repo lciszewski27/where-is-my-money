@@ -48,6 +48,17 @@ class CurrencyConversionUseCase {
 
     fun getAllRates(): List<ExchangeRate> = rates.toList()
 
+    /**
+     * Replace the in-memory rate table, e.g. with rates loaded from
+     * persistent storage on app start. Invalid entries are skipped.
+     */
+    fun syncRates(persisted: List<ExchangeRate>) {
+        rates.clear()
+        for (rate in persisted) {
+            setRate(rate.fromCurrency, rate.toCurrency, rate.rate)
+        }
+    }
+
     /** Format amount with the proper currency symbol. */
     fun formatAmount(cents: Long, currency: String, includeCode: Boolean = false): String {
         val info = CurrencyInfo.fromCode(currency)

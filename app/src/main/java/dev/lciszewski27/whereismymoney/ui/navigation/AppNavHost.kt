@@ -291,7 +291,8 @@ fun AppNavHost(
                     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                         return SettingsViewModel(
                             preferences = app.preferences,
-                            currencyConversion = app.currencyConversion
+                            currencyConversion = app.currencyConversion,
+                            repository = app.repository
                         ) as T
                     }
                 }

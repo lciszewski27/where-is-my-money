@@ -1,6 +1,7 @@
 package dev.lciszewski27.whereismymoney.ui.person
 
 import dev.lciszewski27.whereismymoney.domain.model.Debt
+import dev.lciszewski27.whereismymoney.domain.model.Payment
 import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.domain.usecase.PersonDetailData
 
@@ -10,6 +11,7 @@ import dev.lciszewski27.whereismymoney.domain.usecase.PersonDetailData
 data class PersonDetailUiState(
     val person: Person? = null,
     val debts: List<Debt> = emptyList(),
+    val payments: List<Payment> = emptyList(),
     val netCents: Long = 0L,
     val netCurrency: String = "PLN",
     val isLoading: Boolean = true

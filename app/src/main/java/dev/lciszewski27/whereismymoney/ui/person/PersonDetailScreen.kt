@@ -77,6 +77,8 @@ import dev.lciszewski27.whereismymoney.domain.model.CurrencyInfo
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
+import dev.lciszewski27.whereismymoney.domain.model.Payment
+import dev.lciszewski27.whereismymoney.domain.model.PaymentKind
 import dev.lciszewski27.whereismymoney.domain.util.MoneyInput
 import dev.lciszewski27.whereismymoney.ui.components.ExpressiveLinearProgress
 import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
@@ -519,6 +521,34 @@ fun PersonDetailScreen(
                     )
                 }
             }
+
+            // ── Payment ledger (audit history) ───────────────────────
+            item {
+                Column(modifier = Modifier.padding(horizontal = MoneySpacing.lg)) {
+                    Text(
+                        text = "Payments",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Black,
+                        modifier = Modifier.padding(bottom = MoneySpacing.xs)
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+
+            if (uiState.payments.isEmpty()) {
+                item {
+                    Text(
+                        text = "No payments recorded yet. Settle a debt to start the ledger.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = MoneySpacing.lg)
+                    )
+                }
+            } else {
+                items(uiState.payments, key = { it.id }) { payment ->
+                    PaymentItem(payment = payment)
+                }
+            }
         }
     }
 }
@@ -743,6 +773,51 @@ private fun EmptyDebtsPlaceholder() {
 private fun formatTimestamp(epoch: Long): String {
     val fmt = SimpleDateFormat("MMM dd, yyyy", java.util.Locale.getDefault())
     return fmt.format(Date(epoch))
+}
+
+/**
+ * One row of the payment ledger. Quiet M3 ListItem: state is carried by
+ * icon + label text (never color alone), no wrapping card.
+ */
+@Composable
+private fun PaymentItem(
+    payment: Payment,
+    modifier: Modifier = Modifier
+) {
+    val currencySymbol = CurrencyInfo.fromCode(payment.currency).symbol
+    val kindLabel = when (payment.kind) {
+        PaymentKind.PARTIAL -> "Partial payment"
+        PaymentKind.FULL -> "Paid in full"
+        PaymentKind.SETTLE_ALL -> "Settle-all payment"
+    }
+    ListItem(
+        leadingContent = {
+            Icon(
+                if (payment.kind == PaymentKind.PARTIAL) Icons.Filled.Payments
+                else Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.tertiary
+            )
+        },
+        supportingContent = {
+            Text(
+                text = "$kindLabel · ${formatTimestamp(payment.timestamp)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        modifier = modifier,
+        content = {
+            Text(
+                text = "${MoneyInput.formatCentsForInput(payment.amountCents)} $currencySymbol",
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    )
 }
 
 @Preview(showBackground = true)

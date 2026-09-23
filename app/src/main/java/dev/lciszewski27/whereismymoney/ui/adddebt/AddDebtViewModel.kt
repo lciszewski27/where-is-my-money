@@ -8,6 +8,7 @@ import dev.lciszewski27.whereismymoney.domain.model.DebtType
 import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
 import dev.lciszewski27.whereismymoney.domain.util.MoneyInput
+import dev.lciszewski27.whereismymoney.domain.util.SplitCalculator
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -132,13 +133,75 @@ class AddDebtViewModel(
             }
             is AddDebtUiEvent.SaveDebt -> saveDebt()
             is AddDebtUiEvent.Dismiss -> viewModelScope.launch { _dismiss.emit(Unit) }
+            is AddDebtUiEvent.ToggleSplitMode -> {
+                _uiState.update { state ->
+                    val enabling = !state.splitMode
+                    state.copy(
+                        splitMode = enabling,
+                        // Pre-select the already chosen person when entering split mode.
+                        splitPersonIds = if (enabling) {
+                            state.selectedPersonId?.let { setOf(it) } ?: emptySet()
+                        } else state.splitPersonIds
+                    )
+                }
+            }
+            is AddDebtUiEvent.ToggleSplitPerson -> {
+                _uiState.update { state ->
+                    val updated = if (event.personId in state.splitPersonIds) {
+                        state.splitPersonIds - event.personId
+                    } else {
+                        state.splitPersonIds + event.personId
+                    }
+                    state.copy(splitPersonIds = updated)
+                }
+            }
         }
+    }
+
+    /**
+     * Per-person shares for the current split selection, in selection order.
+     * Used by the sheet preview and by [saveDebt].
+     */
+    fun currentSplitShares(): List<Pair<String, Long>> {
+        val state = _uiState.value
+        val ids = state.persons
+            .filter { it.id in state.splitPersonIds }
+            .map { it.id }
+        val shares = SplitCalculator.equalShares(state.amountCents, ids.size)
+        return ids.zip(shares)
     }
 
     private fun saveDebt() {
         viewModelScope.launch {
             val state = _uiState.value
             if (state.amountCents <= 0) return@launch
+
+            // ── Group split: one debt per selected person ────────────
+            if (state.splitMode && !state.isEditing) {
+                val shares = currentSplitShares()
+                if (shares.isEmpty()) return@launch
+                val now = System.currentTimeMillis()
+                for ((personId, shareCents) in shares) {
+                    if (shareCents <= 0) continue
+                    repository.insertDebt(
+                        Debt(
+                            id = java.util.UUID.randomUUID().toString(),
+                            personId = personId,
+                            amountCents = shareCents,
+                            currency = state.currency,
+                            type = state.debtType,
+                            description = state.description.trim(),
+                            timestamp = now,
+                            dueDateMillis = state.dueDateMillis,
+                            isSettled = false,
+                            categoryId = state.selectedCategoryId
+                        )
+                    )
+                }
+                _dismiss.emit(Unit)
+                return@launch
+            }
+
             if (state.selectedPersonId == null && state.newPersonName.isBlank()) return@launch
 
             val personId = if (state.selectedPersonId != null) {

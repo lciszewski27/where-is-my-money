@@ -8,6 +8,11 @@ import dev.lciszewski27.whereismymoney.data.repository.DebtRepositoryImpl
 import dev.lciszewski27.whereismymoney.domain.usecase.CurrencyConversionUseCase
 import dev.lciszewski27.whereismymoney.domain.usecase.GetDashboardSummaryUseCase
 import dev.lciszewski27.whereismymoney.domain.usecase.GetPersonDetailUseCase
+import dev.lciszewski27.whereismymoney.domain.usecase.SettleUpUseCase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 /**
  * Application-level dependency container.
@@ -31,11 +36,16 @@ class WhereIsMyMoneyApp : Application() {
     lateinit var getPersonDetailUseCase: GetPersonDetailUseCase
         private set
 
+    lateinit var settleUpUseCase: SettleUpUseCase
+        private set
+
     lateinit var repository: DebtRepositoryImpl
         private set
 
     lateinit var backupService: BackupService
         private set
+
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
@@ -52,18 +62,33 @@ class WhereIsMyMoneyApp : Application() {
             personDao = database.personDao(),
             debtDao = database.debtDao(),
             categoryDao = database.categoryDao(),
+            paymentDao = database.paymentDao(),
+            exchangeRateDao = database.exchangeRateDao(),
             currencyConversion = currencyConversion
         )
 
         // ── Use Cases ────────────────────────────────────────────────
         getDashboardSummaryUseCase = GetDashboardSummaryUseCase(repository)
         getPersonDetailUseCase = GetPersonDetailUseCase(repository)
+        settleUpUseCase = SettleUpUseCase()
 
         // ── Backup ───────────────────────────────────────────────────
         backupService = BackupService(
             personDao = database.personDao(),
             debtDao = database.debtDao(),
-            categoryDao = database.categoryDao()
+            categoryDao = database.categoryDao(),
+            paymentDao = database.paymentDao(),
+            exchangeRateDao = database.exchangeRateDao()
         )
+
+        // ── Restore persisted exchange rates into the conversion engine.
+        // Keeps multi-currency totals stable across process death and makes
+        // rates imported via backup effective immediately.
+        applicationScope.launch {
+            currencyConversion.syncRates(repository.getExchangeRates())
+            repository.observeExchangeRates().collect { rates ->
+                currencyConversion.syncRates(rates)
+            }
+        }
     }
 }

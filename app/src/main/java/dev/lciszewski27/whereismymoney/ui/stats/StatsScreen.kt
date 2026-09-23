@@ -47,10 +47,13 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import dev.lciszewski27.whereismymoney.WhereIsMyMoneyApp
+import dev.lciszewski27.whereismymoney.domain.model.SettleTransfer
 import dev.lciszewski27.whereismymoney.domain.model.StatsSummary
 import dev.lciszewski27.whereismymoney.domain.model.StatsMonthlyTrend
+import dev.lciszewski27.whereismymoney.ui.components.PersonAvatar
 import dev.lciszewski27.whereismymoney.ui.theme.MoneySpacing
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,7 +70,8 @@ fun StatsScreen(
             override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
                 return StatsViewModel(
                     repository = app.repository,
-                    preferences = app.preferences
+                    preferences = app.preferences,
+                    settleUpUseCase = app.settleUpUseCase
                 ) as T
             }
         }
@@ -108,6 +112,8 @@ fun StatsScreen(
         } else {
             StatsScreenContent(
                 stats = uiState.stats,
+                settleSuggestions = uiState.settleSuggestions,
+                settleCurrency = uiState.settleCurrency,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(innerPadding)
@@ -119,6 +125,8 @@ fun StatsScreen(
 @Composable
 private fun StatsScreenContent(
     stats: StatsSummary,
+    settleSuggestions: List<SettleTransfer>,
+    settleCurrency: String,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -178,6 +186,35 @@ private fun StatsScreenContent(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.weight(1f)
             )
+        }
+
+        Spacer(Modifier.height(MoneySpacing.xs))
+
+        // ── Section: Settle Up ───────────────────────────────────────
+        // Simplification suggestions: who should pay whom directly so the
+        // user is cut out as a middleman. Guidance only — settling still
+        // happens through the normal person flows.
+        Text(
+            "Settle Up",
+            style = MaterialTheme.typography.titleSmall,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.SemiBold
+        )
+        Text(
+            "Fewer transfers, same balances. Settle these directly with each other.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        if (settleSuggestions.isEmpty()) {
+            Text(
+                "Nothing to simplify — balances already net out.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            settleSuggestions.forEach { transfer ->
+                SettleTransferRow(transfer = transfer)
+            }
         }
 
         Spacer(Modifier.height(MoneySpacing.xs))
@@ -451,6 +488,57 @@ private fun formatCents(cents: Long, currency: String): String {
     val major = cents / 100
     val minor = (cents % 100).toString().padStart(2, '0')
     return "$major.$minor$symbol"
+}
+
+/**
+ * One settle-up suggestion row: payer avatar → "A pays B · amount" →
+ * receiver avatar. Sibling card (not nested) matching the StatCard family.
+ */
+@Composable
+private fun SettleTransferRow(
+    transfer: SettleTransfer,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+        ),
+        shape = RoundedCornerShape(MoneySpacing.md)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(MoneySpacing.md),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
+        ) {
+            PersonAvatar(
+                name = transfer.fromPersonName,
+                colorSeed = transfer.fromPersonColorSeed,
+                size = 40.dp
+            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "${transfer.fromPersonName} → ${transfer.toPersonName}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Text(
+                    text = "pays ${formatCents(transfer.amountCents, transfer.currency)} directly",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            PersonAvatar(
+                name = transfer.toPersonName,
+                colorSeed = transfer.toPersonColorSeed,
+                size = 40.dp
+            )
+        }
+    }
 }
 
 // Preview is intentionally omitted as StatsScreen needs app context
