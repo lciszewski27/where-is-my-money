@@ -1,15 +1,45 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+# --- Android / Gradle build outputs (generated, never commit) ---
+.gradle/
+build/
+out/
+captures/
+.externalNativeBuild/
+.cxx/
+.kotlin/
+
+# --- Local SDK path & signing secrets (machine-specific, never commit) ---
 local.properties
+*.jks
+*.keystore
+*.p12
+*.pfx
+key.properties
+signing.properties
+
+# --- Release artifacts ---
+# Published via GitHub Releases (see .github/workflows/release.yml),
+# not stored in git. Covers the local `app/release/` output dir
+# and any stray bundles/splits.
+app/release/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# --- Android Studio / IntelliJ IDEA ---
+# Team settings (code styles, inspections, run configs) stay tracked;
+# per-user / generated state is ignored.
+*.iml
+.idea/
+
+# --- OS / editor leftovers ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+.vscode/
+
+# --- Diagnostics ---
+*.hprof
+*.jfr
