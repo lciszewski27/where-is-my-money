@@ -2,6 +2,7 @@ package dev.lciszewski27.whereismymoney.ui.person
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dev.lciszewski27.whereismymoney.data.local.preferences.UserPreferencesDataStore
 import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.Payment
 import dev.lciszewski27.whereismymoney.domain.model.PaymentKind
@@ -14,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -21,7 +23,8 @@ import kotlinx.coroutines.launch
 class PersonDetailViewModel(
     private val personId: String,
     private val repository: DebtRepository,
-    private val getPersonDetail: GetPersonDetailUseCase
+    private val getPersonDetail: GetPersonDetailUseCase,
+    private val preferences: UserPreferencesDataStore
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PersonDetailUiState())
@@ -45,7 +48,10 @@ class PersonDetailViewModel(
 
     private fun observePerson() {
         viewModelScope.launch {
-            getPersonDetail(personId).collect { data ->
+            combine(
+                getPersonDetail(personId),
+                preferences.confirmBeforeSettle
+            ) { data, confirm -> data to confirm }.collect { (data, confirm) ->
                 _uiState.update { state ->
                     state.copy(
                         person = data.person,
@@ -53,6 +59,7 @@ class PersonDetailViewModel(
                         payments = data.payments,
                         netCents = data.netCents,
                         netCurrency = data.netCurrency,
+                        confirmBeforeSettle = confirm,
                         isLoading = false
                     )
                 }

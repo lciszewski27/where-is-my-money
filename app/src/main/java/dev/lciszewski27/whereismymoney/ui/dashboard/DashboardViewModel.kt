@@ -7,6 +7,7 @@ import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.DebtItemWithPerson
 import dev.lciszewski27.whereismymoney.domain.model.Payment
 import dev.lciszewski27.whereismymoney.domain.model.PaymentKind
+import dev.lciszewski27.whereismymoney.domain.model.Person
 import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
 import dev.lciszewski27.whereismymoney.domain.usecase.GetDashboardSummaryUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -54,10 +55,11 @@ class DashboardViewModel(
         viewModelScope.launch {
             combine(
                 preferences.primaryCurrency,
+                preferences.personSortOrder,
                 _uiState.map { it.searchQuery },
                 _uiState.map { it.filterType }
-            ) { currency, query, filter -> Triple(currency, query, filter) }
-            .flatMapLatest { (currency, query, filter) ->
+            ) { currency, sortOrder, query, filter -> Quad(currency, sortOrder, query, filter) }
+            .flatMapLatest { (currency, sortOrder, query, filter) ->
                 val summaryFlow = dashboardSummaryUseCase(currency)
                 val personsFlow = repository.observePersonsWithBalance(currency).map { list ->
                     list.filter { person ->
@@ -95,9 +97,22 @@ class DashboardViewModel(
                         .map { toDebtItemWithPerson(it, personMap) }
                         .filterNotNull()
 
+                    val sortedPersons = when (sortOrder) {
+                        "balance" -> persons.sortedByDescending { it.balanceCents }
+                        "recent" -> {
+                            val lastActive = allDebts.groupBy { it.personId }
+                                .mapValues { (_, debts) -> debts.maxOf { it.timestamp } }
+                            persons.sortedWith(
+                                compareByDescending<Person> { lastActive[it.id] ?: Long.MIN_VALUE }
+                                    .thenBy { it.name }
+                            )
+                        }
+                        else -> persons // "name": DAO already returns name ASC
+                    }
+
                     _uiState.update { state ->
                         state.copy(
-                            persons = persons,
+                            persons = sortedPersons,
                             summary = summary,
                             upcomingRepayments = upcoming,
                             recentActivity = recent,
@@ -191,3 +206,11 @@ class DashboardViewModel(
         }
     }
 }
+
+/** Tuple for combining currency + sort + search + filter preferences. */
+private data class Quad<A, B, C, D>(
+    val first: A,
+    val second: B,
+    val third: C,
+    val fourth: D
+)

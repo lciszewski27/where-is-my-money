@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
             val animationsEnabled by app.preferences.animationsEnabled.collectAsState(initial = true)
             val colorPresetStr by app.preferences.colorPreset.collectAsState(initial = "DEFAULT")
             val appFontStr by app.preferences.appFont.collectAsState(initial = "quicksand")
+            val startScreenStr by app.preferences.startScreen.collectAsState(initial = "dashboard")
             val colorPreset = try { ColorPreset.valueOf(colorPresetStr) } catch (e: Exception) { ColorPreset.DEFAULT }
             val useSystemFont = appFontStr == "system"
 
@@ -45,7 +46,13 @@ class MainActivity : ComponentActivity() {
                 useSystemFont = useSystemFont
             ) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    AppNavHost()
+                    AppNavHost(
+                        startDestination = if (startScreenStr == "stats") {
+                            dev.lciszewski27.whereismymoney.ui.navigation.Route.Stats
+                        } else {
+                            dev.lciszewski27.whereismymoney.ui.navigation.Route.Dashboard
+                        }
+                    )
                 }
             }
         }

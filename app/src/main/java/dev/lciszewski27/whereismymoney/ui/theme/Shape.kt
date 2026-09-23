@@ -6,24 +6,23 @@ import androidx.compose.material3.Shapes
 import androidx.compose.ui.unit.dp
 
 /**
- * Expressive Material 3 shapes with distinct morphing geometry.
- * Includes the May 2025 Expressive update corner tokens.
+ * App-wide Material 3 shape scale with expressive contrast.
+ *
+ * Compact controls stay tight while cards, sheets, and dialogs get
+ * generously round containers:
  *
  * - extraSmall: minimal (4dp)
- * - small: subtle (8dp)
- * - medium: balanced (12dp)
- * - large: generous (16dp)
- * - largeIncreases: extra generous (20dp) — Expressive
- * - extraLarge: fully rounded (28dp)
- * - extraLargeIncreased: more rounded (32dp) — Expressive
- * - extraExtraLarge: pill-like (48dp) — Expressive
+ * - small: subtle (10dp)
+ * - medium: balanced (16dp)
+ * - large: generous (24dp)
+ * - extraLarge: fully expressive (36dp)
  */
 val MoneyShapes = Shapes(
     extraSmall = RoundedCornerShape(4.dp),
-    small = RoundedCornerShape(8.dp),
-    medium = RoundedCornerShape(12.dp),
-    large = RoundedCornerShape(16.dp),
-    extraLarge = RoundedCornerShape(28.dp)
+    small = RoundedCornerShape(10.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(24.dp),
+    extraLarge = RoundedCornerShape(36.dp)
 )
 
 /**

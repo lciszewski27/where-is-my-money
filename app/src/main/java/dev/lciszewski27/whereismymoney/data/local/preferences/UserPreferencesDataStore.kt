@@ -32,6 +32,11 @@ class UserPreferencesDataStore(private val context: Context) {
         val ANIMATIONS_ENABLED = booleanPreferencesKey("animations_enabled")
         val COLOR_PRESET = stringPreferencesKey("color_preset")
         val APP_FONT = stringPreferencesKey("app_font") // "quicksand" | "system"
+        val DEFAULT_DEBT_TYPE = stringPreferencesKey("default_debt_type") // DebtType.name
+        val DEFAULT_CATEGORY_ID = stringPreferencesKey("default_category_id") // "" = none
+        val PERSON_SORT_ORDER = stringPreferencesKey("person_sort_order") // "name"|"balance"|"recent"
+        val CONFIRM_BEFORE_SETTLE = booleanPreferencesKey("confirm_before_settle")
+        val START_SCREEN = stringPreferencesKey("start_screen") // "dashboard" | "stats"
     }
 
     val primaryCurrency: Flow<String> = context.dataStore.data.map { prefs ->
@@ -60,6 +65,26 @@ class UserPreferencesDataStore(private val context: Context) {
 
     val appFont: Flow<String> = context.dataStore.data.map { prefs ->
         prefs[Keys.APP_FONT] ?: "quicksand"
+    }
+
+    val defaultDebtType: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[Keys.DEFAULT_DEBT_TYPE] ?: "THEY_OWE_ME"
+    }
+
+    val defaultCategoryId: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[Keys.DEFAULT_CATEGORY_ID] ?: ""
+    }
+
+    val personSortOrder: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[Keys.PERSON_SORT_ORDER] ?: "name"
+    }
+
+    val confirmBeforeSettle: Flow<Boolean> = context.dataStore.data.map { prefs ->
+        prefs[Keys.CONFIRM_BEFORE_SETTLE] ?: true
+    }
+
+    val startScreen: Flow<String> = context.dataStore.data.map { prefs ->
+        prefs[Keys.START_SCREEN] ?: "dashboard"
     }
 
     suspend fun setPrimaryCurrency(code: String) {
@@ -101,6 +126,36 @@ class UserPreferencesDataStore(private val context: Context) {
     suspend fun setAppFont(font: String) {
         context.dataStore.edit { prefs ->
             prefs[Keys.APP_FONT] = font
+        }
+    }
+
+    suspend fun setDefaultDebtType(typeName: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.DEFAULT_DEBT_TYPE] = typeName
+        }
+    }
+
+    suspend fun setDefaultCategoryId(categoryId: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.DEFAULT_CATEGORY_ID] = categoryId
+        }
+    }
+
+    suspend fun setPersonSortOrder(order: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.PERSON_SORT_ORDER] = order
+        }
+    }
+
+    suspend fun setConfirmBeforeSettle(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.CONFIRM_BEFORE_SETTLE] = enabled
+        }
+    }
+
+    suspend fun setStartScreen(screen: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.START_SCREEN] = screen
         }
     }
 

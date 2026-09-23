@@ -51,6 +51,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AppNavHost(
     modifier: Modifier = Modifier,
+    startDestination: Route = Route.Dashboard,
     navController: NavHostController = rememberNavController()
 ) {
     val context = LocalContext.current
@@ -183,7 +184,7 @@ fun AppNavHost(
     // ── Navigation Host ──────────────────────────────────────────────
     NavHost(
         navController = navController,
-        startDestination = Route.Dashboard,
+        startDestination = startDestination,
         modifier = modifier.fillMaxSize(),
         enterTransition = {
             if (animationsEnabled) {
@@ -231,7 +232,8 @@ fun AppNavHost(
                         return PersonDetailViewModel(
                             personId = route.personId,
                             repository = app.repository,
-                            getPersonDetail = app.getPersonDetailUseCase
+                            getPersonDetail = app.getPersonDetailUseCase,
+                            preferences = app.preferences
                         ) as T
                     }
                 }

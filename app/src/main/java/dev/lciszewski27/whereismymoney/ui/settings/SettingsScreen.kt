@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.CurrencyExchange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,6 +48,7 @@ import dev.lciszewski27.whereismymoney.ui.settings.pages.CategoriesSettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.AboutSettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.CurrencySettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.ExchangeRatesSettingsPage
+import dev.lciszewski27.whereismymoney.ui.settings.pages.GeneralSettingsPage
 import dev.lciszewski27.whereismymoney.ui.settings.pages.LicensesSettingsPage
 import dev.lciszewski27.whereismymoney.ui.theme.WhereIsMyMoneyTheme
 
@@ -71,6 +73,7 @@ fun SettingsScreen(
                     Text(
                         text = when (currentPage) {
                             SettingsPage.MAIN -> "Settings"
+                            SettingsPage.GENERAL -> "General"
                             SettingsPage.APPEARANCE -> "Appearance"
                             SettingsPage.CURRENCY -> "Currency"
                             SettingsPage.EXCHANGE_RATES -> "Exchange Rates"
@@ -126,6 +129,7 @@ fun SettingsScreen(
                 ) {
                     when (page) {
                         SettingsPage.MAIN -> MainSettingsPage(onNavigate = { currentPage = it })
+                        SettingsPage.GENERAL -> GeneralSettingsPage(uiState, onEvent)
                         SettingsPage.APPEARANCE -> AppearanceSettingsPage(uiState, onEvent)
                         SettingsPage.CURRENCY -> CurrencySettingsPage(uiState, onEvent)
                         SettingsPage.EXCHANGE_RATES -> ExchangeRatesSettingsPage(uiState, onEvent)
@@ -146,6 +150,12 @@ private fun MainSettingsPage(onNavigate: (SettingsPage) -> Unit) {
         listOf(
             SettingsGroup(
                 items = listOf(
+                    SettingsItem(
+                        "General",
+                        "Defaults, sorting, and confirmations",
+                        Icons.Filled.Tune,
+                        SettingsPage.GENERAL
+                    ),
                     SettingsItem(
                         "Categories",
                         "Manage debt categories",

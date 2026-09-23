@@ -149,37 +149,6 @@ internal fun SettingsToggle(
         })
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-internal fun PrimaryCurrencySelector(
-    selectedCurrency: String,
-    onCurrencySelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-        val info = CurrencyInfo.fromCode(selectedCurrency)
-        OutlinedTextField(
-            value = "${info.symbol}  ${info.code} - ${info.name}",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Primary Currency") },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
-            shape = MaterialTheme.shapes.medium
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            CurrencyInfo.AVAILABLE.forEach { currency ->
-                DropdownMenuItem(
-                    onClick = { expanded = false; onCurrencySelected(currency.code) },
-                    text = { Text("${currency.symbol}  ${currency.code} - ${currency.name}") }
-                )
-            }
-        }
-    }
-}
-
 @Composable
 internal fun AddExchangeRateRow(onAdd: (from: String, to: String, rate: Double) -> Unit) {
     var fromCurrency by remember { mutableStateOf("USD") }

@@ -66,13 +66,36 @@ class AddDebtViewModel(
             val persons = repository.observePersons().first()
             val primaryCurrency = preferences.primaryCurrency.first()
             val categories = repository.observeCategories().first()
+            val defaultTypeName = preferences.defaultDebtType.first()
+            val defaultCategoryId = preferences.defaultCategoryId.first()
+            val defaultType = try {
+                DebtType.valueOf(defaultTypeName)
+            } catch (e: IllegalArgumentException) {
+                DebtType.THEY_OWE_ME
+            }
 
             _uiState.update { state ->
-                state.copy(
-                    persons = persons,
-                    currency = primaryCurrency,
-                    categories = categories
-                )
+                // User defaults only apply to new debts; edits keep stored values
+                // (also avoids clobbering loadDebtForEdit, which runs concurrently).
+                if (editDebtId != null) {
+                    state.copy(
+                        persons = persons,
+                        categories = categories
+                    )
+                } else {
+                    val resolvedType = initialDebtType ?: defaultType
+                    val resolvedCategory =
+                        if (categories.any { it.id == defaultCategoryId }) {
+                            defaultCategoryId
+                        } else state.selectedCategoryId
+                    state.copy(
+                        persons = persons,
+                        currency = primaryCurrency,
+                        categories = categories,
+                        debtType = resolvedType,
+                        selectedCategoryId = resolvedCategory
+                    )
+                }
             }
         }
     }

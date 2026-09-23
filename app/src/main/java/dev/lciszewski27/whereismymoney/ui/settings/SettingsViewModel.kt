@@ -44,6 +44,12 @@ class SettingsViewModel(
             } catch (e: Exception) {
                 AppFont.QUICKSAND
             }
+            val defaultDebtType = preferences.defaultDebtType.first()
+            val defaultCategoryId = preferences.defaultCategoryId.first()
+            val categories = repository.getCategories()
+            val sortOrder = PersonSortOrder.fromValue(preferences.personSortOrder.first())
+            val confirmSettle = preferences.confirmBeforeSettle.first()
+            val startScreen = AppStartScreen.fromValue(preferences.startScreen.first())
 
             val mode = when (theme) {
                 "light" -> ThemeMode.LIGHT
@@ -60,6 +66,12 @@ class SettingsViewModel(
                     animationsEnabled = animations,
                     colorPreset = preset,
                     appFont = font,
+                    defaultDebtTypeName = defaultDebtType,
+                    defaultCategoryId = defaultCategoryId,
+                    categories = categories,
+                    personSortOrder = sortOrder,
+                    confirmBeforeSettle = confirmSettle,
+                    startScreen = startScreen,
                     exchangeRates = repository.getExchangeRates()
                 )
             }
@@ -158,6 +170,73 @@ class SettingsViewModel(
 
             is SettingsUiEvent.DismissFontDropdown -> {
                 _uiState.update { it.copy(isFontDropdownExpanded = false) }
+            }
+
+            is SettingsUiEvent.SetDefaultDebtType -> {
+                viewModelScope.launch {
+                    preferences.setDefaultDebtType(event.typeName)
+                    _uiState.update { it.copy(defaultDebtTypeName = event.typeName) }
+                }
+            }
+
+            is SettingsUiEvent.ToggleDefaultTypeDropdown -> {
+                _uiState.update { it.copy(isDefaultTypeDropdownExpanded = !it.isDefaultTypeDropdownExpanded) }
+            }
+
+            is SettingsUiEvent.DismissDefaultTypeDropdown -> {
+                _uiState.update { it.copy(isDefaultTypeDropdownExpanded = false) }
+            }
+
+            is SettingsUiEvent.SetDefaultCategory -> {
+                viewModelScope.launch {
+                    preferences.setDefaultCategoryId(event.categoryId)
+                    _uiState.update { it.copy(defaultCategoryId = event.categoryId) }
+                }
+            }
+
+            is SettingsUiEvent.ToggleDefaultCategoryDropdown -> {
+                _uiState.update { it.copy(isDefaultCategoryDropdownExpanded = !it.isDefaultCategoryDropdownExpanded) }
+            }
+
+            is SettingsUiEvent.DismissDefaultCategoryDropdown -> {
+                _uiState.update { it.copy(isDefaultCategoryDropdownExpanded = false) }
+            }
+
+            is SettingsUiEvent.SetPersonSortOrder -> {
+                viewModelScope.launch {
+                    preferences.setPersonSortOrder(event.order.value)
+                    _uiState.update { it.copy(personSortOrder = event.order) }
+                }
+            }
+
+            is SettingsUiEvent.ToggleSortOrderDropdown -> {
+                _uiState.update { it.copy(isSortOrderDropdownExpanded = !it.isSortOrderDropdownExpanded) }
+            }
+
+            is SettingsUiEvent.DismissSortOrderDropdown -> {
+                _uiState.update { it.copy(isSortOrderDropdownExpanded = false) }
+            }
+
+            is SettingsUiEvent.ToggleConfirmBeforeSettle -> {
+                viewModelScope.launch {
+                    preferences.setConfirmBeforeSettle(event.enabled)
+                    _uiState.update { it.copy(confirmBeforeSettle = event.enabled) }
+                }
+            }
+
+            is SettingsUiEvent.SetStartScreen -> {
+                viewModelScope.launch {
+                    preferences.setStartScreen(event.screen.value)
+                    _uiState.update { it.copy(startScreen = event.screen) }
+                }
+            }
+
+            is SettingsUiEvent.ToggleStartScreenDropdown -> {
+                _uiState.update { it.copy(isStartScreenDropdownExpanded = !it.isStartScreenDropdownExpanded) }
+            }
+
+            is SettingsUiEvent.DismissStartScreenDropdown -> {
+                _uiState.update { it.copy(isStartScreenDropdownExpanded = false) }
             }
         }
     }

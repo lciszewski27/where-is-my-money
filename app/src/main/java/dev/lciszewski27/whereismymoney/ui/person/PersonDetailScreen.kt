@@ -98,8 +98,36 @@ fun PersonDetailScreen(
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     var showMenu by remember { mutableStateOf(false) }
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var showSettleConfirm by remember { mutableStateOf(false) }
     var splitPayoffDebtId by remember { mutableStateOf<String?>(null) }
     var showEditPersonDialog by remember { mutableStateOf(false) }
+
+    // ── Settle-all confirmation (respects the user preference) ─────────
+    if (showSettleConfirm) {
+        val activeCount = uiState.debts.count { !it.isSettled }
+        AlertDialog(
+            onDismissRequest = { showSettleConfirm = false },
+            title = { Text("Settle all debts?") },
+            text = {
+                Text(
+                    "This marks all $activeCount active debt(s) with " +
+                            "${uiState.person?.name ?: "this person"} as settled. " +
+                            "Each one is recorded in the payment history."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        onEvent(PersonDetailUiEvent.SettleAll)
+                        showSettleConfirm = false
+                    }
+                ) { Text("Settle All") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSettleConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     // ── Edit Person Dialog ───────────────────────────────────────────
     if (showEditPersonDialog && uiState.person != null) {
@@ -473,7 +501,10 @@ fun PersonDetailScreen(
                     horizontalArrangement = Arrangement.spacedBy(MoneySpacing.sm)
                 ) {
                     Button(
-                        onClick = { onEvent(PersonDetailUiEvent.SettleAll) },
+                        onClick = {
+                            if (uiState.confirmBeforeSettle) showSettleConfirm = true
+                            else onEvent(PersonDetailUiEvent.SettleAll)
+                        },
                         modifier = Modifier.weight(1.2f),
                         shape = MaterialTheme.shapes.large,
                         contentPadding = PaddingValues(vertical = 14.dp)

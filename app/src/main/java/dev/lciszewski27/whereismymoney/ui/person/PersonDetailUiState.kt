@@ -14,6 +14,7 @@ data class PersonDetailUiState(
     val payments: List<Payment> = emptyList(),
     val netCents: Long = 0L,
     val netCurrency: String = "PLN",
+    val confirmBeforeSettle: Boolean = true,
     val isLoading: Boolean = true
 )
 

@@ -3,7 +3,7 @@ package dev.lciszewski27.whereismymoney.ui.settings
 import androidx.compose.ui.graphics.vector.ImageVector
 
 internal enum class SettingsPage {
-    MAIN, APPEARANCE, CURRENCY, EXCHANGE_RATES, BACKUP, ABOUT, CATEGORIES, LICENSES
+    MAIN, GENERAL, APPEARANCE, CURRENCY, EXCHANGE_RATES, BACKUP, ABOUT, CATEGORIES, LICENSES
 }
 
 internal data class SettingsGroup(
