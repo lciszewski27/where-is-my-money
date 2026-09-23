@@ -3,7 +3,6 @@ package dev.lciszewski27.whereismymoney.ui.person
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dev.lciszewski27.whereismymoney.data.local.preferences.UserPreferencesDataStore
-import dev.lciszewski27.whereismymoney.domain.model.Debt
 import dev.lciszewski27.whereismymoney.domain.model.Payment
 import dev.lciszewski27.whereismymoney.domain.model.PaymentKind
 import dev.lciszewski27.whereismymoney.domain.repository.DebtRepository
@@ -14,12 +13,14 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class PersonDetailViewModel(
     private val personId: String,
     private val repository: DebtRepository,
@@ -49,21 +50,25 @@ class PersonDetailViewModel(
     private fun observePerson() {
         viewModelScope.launch {
             combine(
-                getPersonDetail(personId),
+                preferences.primaryCurrency,
                 preferences.confirmBeforeSettle
-            ) { data, confirm -> data to confirm }.collect { (data, confirm) ->
-                _uiState.update { state ->
-                    state.copy(
-                        person = data.person,
-                        debts = data.debts,
-                        payments = data.payments,
-                        netCents = data.netCents,
-                        netCurrency = data.netCurrency,
-                        confirmBeforeSettle = confirm,
-                        isLoading = false
-                    )
+            ) { currency, confirm -> currency to confirm }
+                .flatMapLatest { (currency, confirm) ->
+                    getPersonDetail(personId, currency).map { it to confirm }
                 }
-            }
+                .collect { (data, confirm) ->
+                    _uiState.update { state ->
+                        state.copy(
+                            person = data.person,
+                            debts = data.debts,
+                            payments = data.payments,
+                            netCents = data.netCents,
+                            netCurrency = data.netCurrency,
+                            confirmBeforeSettle = confirm,
+                            isLoading = false
+                        )
+                    }
+                }
         }
     }
 
@@ -72,6 +77,7 @@ class PersonDetailViewModel(
             is PersonDetailUiEvent.NavigateBack -> {
                 viewModelScope.launch { _navigateBack.emit(Unit) }
             }
+
             is PersonDetailUiEvent.SettleAll -> {
                 viewModelScope.launch {
                     val active = repository.observeDebtsForPerson(personId).first()
@@ -93,6 +99,7 @@ class PersonDetailViewModel(
                     }
                 }
             }
+
             is PersonDetailUiEvent.SendReminder -> {
                 val state = _uiState.value
                 val person = state.person ?: return
@@ -109,11 +116,13 @@ class PersonDetailViewModel(
                     _shareIntent.emit(message)
                 }
             }
+
             is PersonDetailUiEvent.DeleteDebt -> {
                 viewModelScope.launch {
                     repository.deleteDebt(event.debtId)
                 }
             }
+
             is PersonDetailUiEvent.ToggleSettled -> {
                 viewModelScope.launch {
                     val debt = repository.getDebt(event.debtId) ?: return@launch
@@ -134,17 +143,20 @@ class PersonDetailViewModel(
                     }
                 }
             }
+
             is PersonDetailUiEvent.AddDebt -> {
                 viewModelScope.launch {
                     _navigateToAddDebt.emit(personId)
                 }
             }
+
             is PersonDetailUiEvent.DeletePerson -> {
                 viewModelScope.launch {
                     repository.deletePerson(personId)
                     _navigateBack.emit(Unit)
                 }
             }
+
             is PersonDetailUiEvent.PartialSettle -> {
                 viewModelScope.launch {
                     val debt = repository.getDebt(event.debtId) ?: return@launch
@@ -188,12 +200,19 @@ class PersonDetailViewModel(
                     }
                 }
             }
+
             is PersonDetailUiEvent.UpdatePerson -> {
                 viewModelScope.launch {
                     val person = repository.getPerson(personId) ?: return@launch
-                    repository.insertPerson(person.copy(name = event.name, colorSeed = event.colorSeed))
+                    repository.insertPerson(
+                        person.copy(
+                            name = event.name,
+                            colorSeed = event.colorSeed
+                        )
+                    )
                 }
             }
+
             is PersonDetailUiEvent.EditDebt -> {
                 viewModelScope.launch {
                     _navigateToEditDebt.emit(event.debtId)

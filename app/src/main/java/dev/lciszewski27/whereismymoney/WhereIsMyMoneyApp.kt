@@ -69,7 +69,7 @@ class WhereIsMyMoneyApp : Application() {
 
         // ── Use Cases ────────────────────────────────────────────────
         getDashboardSummaryUseCase = GetDashboardSummaryUseCase(repository)
-        getPersonDetailUseCase = GetPersonDetailUseCase(repository)
+        getPersonDetailUseCase = GetPersonDetailUseCase(repository, currencyConversion)
         settleUpUseCase = SettleUpUseCase()
 
         // ── Backup ───────────────────────────────────────────────────

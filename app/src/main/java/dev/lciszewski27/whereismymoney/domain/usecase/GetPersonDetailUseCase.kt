@@ -21,11 +21,14 @@ data class PersonDetailData(
 
 /**
  * Observes a single person, their full debt list and their payment ledger.
+ * The net balance is converted into primaryCurrency, matching the
+ * dashboard — individual debts keep their own currencies.
  */
 class GetPersonDetailUseCase(
-    private val repository: DebtRepository
+    private val repository: DebtRepository,
+    private val currencyConversion: CurrencyConversionUseCase
 ) {
-    operator fun invoke(personId: String): Flow<PersonDetailData> {
+    operator fun invoke(personId: String, primaryCurrency: String): Flow<PersonDetailData> {
         return combine(
             repository.observePerson(personId),
             repository.observeDebtsForPerson(personId),
@@ -34,9 +37,14 @@ class GetPersonDetailUseCase(
             val net = debts
                 .filter { !it.isSettled }
                 .sumOf {
+                    val converted = currencyConversion.convert(
+                        cents = it.amountCents,
+                        fromCurrency = it.currency,
+                        toCurrency = primaryCurrency
+                    )
                     when (it.type) {
-                        DebtType.THEY_OWE_ME -> it.amountCents
-                        DebtType.I_OWE_THEM -> -it.amountCents
+                        DebtType.THEY_OWE_ME -> converted
+                        DebtType.I_OWE_THEM -> -converted
                     }
                 }
             PersonDetailData(
@@ -44,7 +52,7 @@ class GetPersonDetailUseCase(
                 debts = debts,
                 payments = payments,
                 netCents = net,
-                netCurrency = debts.firstOrNull()?.currency ?: "PLN"
+                netCurrency = primaryCurrency
             )
         }
     }
